@@ -1,0 +1,32 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '2.6.3'
+}
+configurations {
+    all*.exclude group: 'org.apache.logging.log4j', module: 'log4j-slf4j-impl'
+}
+group 'org.example'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src']
+        }
+    }
+}
+test {
+    useJUnitPlatform()
+}
+dependencies {
+//    compile 'junit:junit:4.12'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+    // https://mvnrepository.com/artifact/com.toomasr/sgf4j-parser
+    implementation group: 'com.toomasr', name: 'sgf4j-parser', version: '0.0.6'
+    // https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter
+    implementation group: 'org.springframework.boot', name: 'spring-boot-starter', version: '2.6.3'
+}
