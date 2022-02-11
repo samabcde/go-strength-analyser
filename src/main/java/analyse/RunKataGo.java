@@ -34,8 +34,8 @@ public class RunKataGo
     public static volatile boolean isReady = false;
     public static volatile int completeAnalyzeMoveNo = 0;
     private static volatile AtomicBoolean isCompleteAnalyze = new AtomicBoolean(false);
-    private static volatile AtomicBoolean isCompleteExtract = new AtomicBoolean(false);
     private static volatile AtomicReference<MoveWinrate> lastMoveWinrate = new AtomicReference<>(null);
+    private static final String reportAnalysisWinratesAs = "SIDETOMOVE";
 
     private static BigDecimal extractScoreMean(String line) {
         Pattern pattern = Pattern.compile("scoreMean ([0-9-\\.]+)");
@@ -61,12 +61,12 @@ public class RunKataGo
 
     static int calculateAnalyseTimeMs(Integer noOfMove, Integer runTimeSec, Integer moveNo) {
         BigDecimal runTimeMs = new BigDecimal(runTimeSec * 1000);
-        BigDecimal part1Weight = new BigDecimal("0.1");
-        BigDecimal part2Weight = new BigDecimal("0.7");
-        BigDecimal part3Weight = new BigDecimal("0.2");
-        Integer part1RunTime = runTimeMs.multiply(part1Weight).intValue();
-        Integer part2RunTime = runTimeMs.multiply(part2Weight).intValue();
-        Integer part3RunTime = runTimeMs.multiply(part3Weight).intValue();
+        BigDecimal part1TimeWeight = new BigDecimal("0.1");
+        BigDecimal part2TimeWeight = new BigDecimal("0.7");
+        BigDecimal part3TimeWeight = new BigDecimal("0.2");
+        Integer part1RunTime = runTimeMs.multiply(part1TimeWeight).intValue();
+        Integer part2RunTime = runTimeMs.multiply(part2TimeWeight).intValue();
+        Integer part3RunTime = runTimeMs.multiply(part3TimeWeight).intValue();
         BigDecimal part1MoveWeight = new BigDecimal("0.1");
         BigDecimal part2MoveWeight = new BigDecimal("0.6");
         // BigDecimal part3MoveWeight = new BigDecimal("0.3");
@@ -115,62 +115,55 @@ public class RunKataGo
         final Integer noOfMove = game.getNoMoves();
         try {
 
-            ProcessBuilder processBuilder = new ProcessBuilder(kataGoPath, "gtp", "-config", configFilePath, "-model",
-                    weightPath);
-            // processBuilder.redirectErrorStream(true);
+            ProcessBuilder processBuilder = new ProcessBuilder(kataGoPath, "gtp", "-config", configFilePath,
+                    "-model", weightPath,
+                    "-override-config", "reportAnalysisWinratesAs=" + reportAnalysisWinratesAs);
             Process kataGoProcess = processBuilder.start();
             ExecutorService readInputNewSingleThreadExecutor = Executors.newSingleThreadExecutor();
-            final List<MoveWinrate> moveWinrates = new ArrayList<MoveWinrate>();
-            readInputNewSingleThreadExecutor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    try (BufferedReader input = new BufferedReader(
-                            new InputStreamReader(kataGoProcess.getInputStream()));) {
-                        String line;
-                        int moveNo = 0;
-                        MoveWinrate moveWinRate = null;
-                        while ((line = input.readLine()) != null) {
-                            if (line.startsWith("info move")) {
-                                System.out.println("I " + line);
-                                BigDecimal winrate = extractWinrate(line);
-                                BigDecimal scoreMean = extractScoreMean(line);
-                                lastMoveWinrate.set(new MoveWinrate(moveNo + 1, new BigDecimal("100").subtract(winrate),
-                                        scoreMean));
-                            }
-                            if (isCompleteAnalyze.getAndSet(false)) {
-                                System.out.println(line);
-                                moveNo++;
-                            }
-                            // System.out.println("debug out" + line);
+            final List<MoveWinrate> moveWinrates = new ArrayList<>();
+            readInputNewSingleThreadExecutor.execute(() -> {
+                try (BufferedReader input = new BufferedReader(
+                        new InputStreamReader(kataGoProcess.getInputStream()));) {
+                    String line;
+                    int moveNo = 0;
+                    MoveWinrate moveWinRate = null;
+                    while ((line = input.readLine()) != null) {
+                        if (line.startsWith("info move")) {
+                            System.out.println("I " + line);
+                            BigDecimal winrate = extractWinrate(line);
+                            BigDecimal scoreMean = extractScoreMean(line);
+                            lastMoveWinrate.set(new MoveWinrate(moveNo + 1, new BigDecimal("100").subtract(winrate),
+                                    scoreMean));
                         }
-
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                        if (isCompleteAnalyze.getAndSet(false)) {
+                            System.out.println(line);
+                            moveNo++;
+                        }
+                        // System.out.println("debug out" + line);
                     }
+
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             });
             ExecutorService readErrorNewSingleThreadExecutor = Executors.newSingleThreadExecutor();
-            readErrorNewSingleThreadExecutor.execute(new Runnable() {
+            readErrorNewSingleThreadExecutor.execute(() -> {
+                try (BufferedReader input = new BufferedReader(
+                        new InputStreamReader(kataGoProcess.getErrorStream()));) {
+                    String line;
 
-                @Override
-                public void run() {
-                    try (BufferedReader input = new BufferedReader(
-                            new InputStreamReader(kataGoProcess.getErrorStream()));) {
-                        String line;
-
-                        while ((line = input.readLine()) != null) {
-                            System.out.println(line);
-                            if (line.startsWith("NN eval")) {
-                                System.out.println("E " + line);
-                            }
-                            if (line.startsWith("GTP ready, beginning main protocol loop")) {
-
-                                isReady = true;
-                            }
+                    while ((line = input.readLine()) != null) {
+                        System.out.println(line);
+                        if (line.startsWith("NN eval")) {
+                            System.out.println("E " + line);
                         }
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                        if (line.startsWith("GTP ready, beginning main protocol loop")) {
+
+                            isReady = true;
+                        }
                     }
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             });
             ExecutorService writeOutputSingleThreadExecutor = Executors.newSingleThreadExecutor();
@@ -235,12 +228,7 @@ public class RunKataGo
                         winrate.getMoveNo() + "\t" + winrate.getBlackWinrate() + "\t" + winrate.getBlackScoreMean());
             }
 
-            winrateChanges.sort(new Comparator<MoveWinrate>() {
-                @Override
-                public int compare(MoveWinrate o1, MoveWinrate o2) {
-                    return o1.getRateChange().compareTo(o2.getRateChange());
-                }
-            });
+            winrateChanges.sort(Comparator.comparing(MoveWinrate::getRateChange));
             System.out.println("Bad move");
             for (int i = 0; i < 3; i++) {
                 MoveWinrate winrate = winrateChanges.get(i);
