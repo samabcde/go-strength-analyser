@@ -1,8 +1,7 @@
 package analyse;
 
 import com.toomasr.sgf4j.parser.Game;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -17,12 +16,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Component
+@Log
 public class RunKataGo implements CommandLineRunner {
-    private static final Logger logger = LoggerFactory.getLogger(RunKataGo.class);
 
     @Value("${path.kataGoPath}")
     private String kataGoPath;
@@ -38,27 +35,10 @@ public class RunKataGo implements CommandLineRunner {
     private static volatile AtomicBoolean isCompleteAnalyze = new AtomicBoolean(false);
     private static volatile AtomicReference<MoveMetrics> lastMoveWinrate = new AtomicReference<>(null);
     private static final String reportAnalysisWinratesAs = "SIDETOMOVE";
+    private final MoveMetricsExtractor moveMetricsExtractor;
 
-    private static BigDecimal extractScoreMean(String line) {
-        Pattern pattern = Pattern.compile("scoreMean ([0-9-\\.]+)");
-        Matcher matcher = pattern.matcher(line);
-        if (matcher.find()) {
-            String scoreMean = matcher.group(1);
-            return new BigDecimal(scoreMean);
-        } else {
-            throw new IllegalArgumentException("");
-        }
-    }
-
-    private static BigDecimal extractWinrate(String line) {
-        Pattern pattern = Pattern.compile("winrate ([0-9\\.]+)");
-        Matcher matcher = pattern.matcher(line);
-        if (matcher.find()) {
-            String winrate = matcher.group(1);
-            return new BigDecimal(winrate).multiply(new BigDecimal("100"));
-        } else {
-            throw new IllegalArgumentException("");
-        }
+    public RunKataGo(MoveMetricsExtractor moveMetricsExtractor) {
+        this.moveMetricsExtractor = moveMetricsExtractor;
     }
 
     static int calculateAnalyseTimeMs(Integer noOfMove, Integer runTimeSec, Integer moveNo) {
@@ -91,7 +71,7 @@ public class RunKataGo implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        logger.info("Start Analyse");
+        log.info("Start Analyse");
         String sgfNameStr = "";
         String runTimeSecStr = "";
         for (String arg : args) {
@@ -131,17 +111,14 @@ public class RunKataGo implements CommandLineRunner {
                     MoveMetrics moveWinRate = null;
                     while ((line = input.readLine()) != null) {
                         if (line.startsWith("info move")) {
-                            logger.info("I " + line);
-                            BigDecimal winrate = extractWinrate(line);
-                            BigDecimal scoreMean = extractScoreMean(line);
-                            lastMoveWinrate.set(new MoveMetrics(moveNo + 1, new BigDecimal("100").subtract(winrate),
-                                    scoreMean));
+                            log.info("I " + line);
+                            lastMoveWinrate.set(moveMetricsExtractor.extractMoveMetrics(moveNo + 1, line));
                         }
                         if (isCompleteAnalyze.getAndSet(false)) {
-                            logger.info(line);
+                            log.info(line);
                             moveNo++;
                         }
-                        // logger.info("debug out" + line);
+                        // log.info("debug out" + line);
                     }
 
                 } catch (IOException e) {
@@ -155,9 +132,9 @@ public class RunKataGo implements CommandLineRunner {
                     String line;
 
                     while ((line = input.readLine()) != null) {
-                        logger.info(line);
+                        log.info(line);
                         if (line.startsWith("NN eval")) {
-                            logger.info("E " + line);
+                            log.info("E " + line);
                         }
                         if (line.startsWith("GTP ready, beginning main protocol loop")) {
 
@@ -187,7 +164,7 @@ public class RunKataGo implements CommandLineRunner {
                         while (isCompleteAnalyze.get()) {
                             Thread.sleep(50);
                         }
-                        logger.info("analyze move " + i);
+                        log.info("analyze move " + i);
                         int analyseTimeMs = calculateAnalyseTimeMs(noOfMove, runTimeSec, i);
                         String sgfPath = getSgfPath(sgfName);
                         output.append("loadsgf " + sgfPath + " " + i);
@@ -223,15 +200,15 @@ public class RunKataGo implements CommandLineRunner {
             readErrorNewSingleThreadExecutor.shutdown();
             writeOutputSingleThreadExecutor.shutdown();
             kataGoProcess.destroy();
-            logger.info("Win Rate:");
+            log.info("Win Rate:");
             List<MoveMetrics> winrateChanges = MoveMetrics.calculateWinrateChanges(moveMetrics);
             for (MoveMetrics winrate : moveMetrics) {
-                logger.info(
+                log.info(
                         winrate.getMoveNo() + "\t" + winrate.getBlackWinrate() + "\t" + winrate.getBlackScoreMean());
             }
 
             winrateChanges.sort(Comparator.comparing(MoveMetrics::getRateChange));
-            logger.info("Bad move");
+            log.info("Bad move");
             for (int i = 0; i < 3; i++) {
                 MoveMetrics winrate = winrateChanges.get(i);
                 System.out.print(winrate.getMoveNo() + 1 + "("
@@ -240,8 +217,8 @@ public class RunKataGo implements CommandLineRunner {
                     System.out.print(", ");
                 }
             }
-            logger.info("");
-            logger.info("Good move");
+            log.info("");
+            log.info("Good move");
             for (int i = winrateChanges.size() - 1; i > winrateChanges.size() - 4; i--) {
                 MoveMetrics winrate = winrateChanges.get(i);
                 System.out.print(winrate.getMoveNo() + 1 + "("
@@ -251,9 +228,9 @@ public class RunKataGo implements CommandLineRunner {
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
 

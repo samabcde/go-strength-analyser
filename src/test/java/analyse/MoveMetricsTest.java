@@ -30,15 +30,15 @@ class MoveMetricsTest {
         }
 
         @Test
-        public void Given_moveMetricsWithOddNumberMove_Should_return_Winrate() {
+        public void Given_moveMetricsWithOddNumberMove_Should_return_100minusWinrate() {
             MoveMetrics moveMetricsWithOddNumber = new MoveMetrics(9, BigDecimal.valueOf(89.64), BigDecimal.valueOf(3.14));
-            assertEquals(BigDecimal.valueOf(89.64), moveMetricsWithOddNumber.getBlackWinrate());
+            assertEquals(BigDecimal.valueOf(10.36), moveMetricsWithOddNumber.getBlackWinrate());
         }
 
         @Test
-        public void Given_moveMetricsWithEvenNumberMove_Should_return_100minusWinrate() {
+        public void Given_moveMetricsWithEvenNumberMove_Should_return_Winrate() {
             MoveMetrics moveMetricsWithEvenNumber = new MoveMetrics(10, BigDecimal.valueOf(89.64), BigDecimal.valueOf(3.14));
-            assertEquals(BigDecimal.valueOf(10.36), moveMetricsWithEvenNumber.getBlackWinrate());
+            assertEquals(BigDecimal.valueOf(89.64), moveMetricsWithEvenNumber.getBlackWinrate());
         }
     }
 
@@ -52,15 +52,15 @@ class MoveMetricsTest {
 
 
         @Test
-        public void Given_moveMetricsWithOddNumberMove_Should_return_ScoreMean() {
+        public void Given_moveMetricsWithOddNumberMove_Should_return_NegateOfScoreMean() {
             MoveMetrics moveMetricsWithOddNumber = new MoveMetrics(9, BigDecimal.valueOf(89.64), BigDecimal.valueOf(3.14));
-            assertEquals(BigDecimal.valueOf(3.14), moveMetricsWithOddNumber.getBlackScoreMean());
+            assertEquals(BigDecimal.valueOf(-3.14), moveMetricsWithOddNumber.getBlackScoreMean());
         }
 
         @Test
-        public void Given_moveMetricsWithEvenNumberMove_Should_return_NegateOfScoreMean() {
+        public void Given_moveMetricsWithEvenNumberMove_Should_return_ScoreMean() {
             MoveMetrics moveMetricsWithEvenNumber = new MoveMetrics(10, BigDecimal.valueOf(89.64), BigDecimal.valueOf(3.14));
-            assertEquals(BigDecimal.valueOf(-3.14), moveMetricsWithEvenNumber.getBlackScoreMean());
+            assertEquals(BigDecimal.valueOf(3.14), moveMetricsWithEvenNumber.getBlackScoreMean());
         }
 
     }

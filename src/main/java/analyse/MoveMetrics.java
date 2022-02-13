@@ -1,12 +1,17 @@
 package analyse;
 
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.ToString;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
-
+@ToString
+@Builder
+@EqualsAndHashCode
 public class MoveMetrics {
 
     @Getter
@@ -15,11 +20,9 @@ public class MoveMetrics {
     private final BigDecimal winrate;
     @Getter
     private final BigDecimal scoreMean;
+    @EqualsAndHashCode.Exclude
     @Getter
     private BigDecimal rateChange;
-    @Getter
-    private BigDecimal scoreMeanChange;
-
 
     static List<MoveMetrics> calculateWinrateChanges(List<MoveMetrics> winrates) {
         List<MoveMetrics> winrateChanges = new ArrayList<>();
@@ -30,6 +33,13 @@ public class MoveMetrics {
         return winrateChanges;
     }
 
+    public MoveMetrics(Integer moveNo, BigDecimal winrate, BigDecimal scoreMean, BigDecimal rateChange) {
+        this.moveNo = moveNo;
+        this.winrate = winrate;
+        this.scoreMean = scoreMean;
+        this.rateChange = rateChange;
+    }
+
     public MoveMetrics(Integer moveNo, BigDecimal winrate, BigDecimal scoreMean) {
         this.moveNo = moveNo;
         this.winrate = winrate;
@@ -37,11 +47,11 @@ public class MoveMetrics {
     }
 
     public BigDecimal getBlackWinrate() {
-        return this.moveNo % 2 == 0 ? new BigDecimal("100").subtract(winrate) : this.winrate;
+        return this.moveNo % 2 == 0 ? this.winrate : new BigDecimal("100").subtract(winrate);
     }
 
     public BigDecimal getBlackScoreMean() {
-        return this.moveNo % 2 == 0 ? scoreMean.negate() : scoreMean;
+        return this.moveNo % 2 == 0 ? scoreMean : scoreMean.negate();
     }
 
     public void calculateRateChange(BigDecimal nextBlackWinrate) {
@@ -49,8 +59,4 @@ public class MoveMetrics {
         this.rateChange = this.moveNo % 2 == 1 ? blackRateChange.negate() : blackRateChange;
     }
 
-    public void calculateScoreMeanChange(BigDecimal nextBlackScoreMean) {
-        BigDecimal blackScoreMeanChange = (nextBlackScoreMean.subtract(this.getBlackScoreMean()));
-        this.scoreMeanChange = this.moveNo % 2 == 1 ? blackScoreMeanChange.negate() : blackScoreMeanChange;
-    }
 }
