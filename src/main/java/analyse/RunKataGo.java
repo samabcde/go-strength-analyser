@@ -8,9 +8,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.*;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -36,9 +34,11 @@ public class RunKataGo implements CommandLineRunner {
     private static volatile AtomicReference<MoveMetrics> lastMoveWinrate = new AtomicReference<>(null);
     private static final String reportAnalysisWinratesAs = "SIDETOMOVE";
     private final MoveMetricsExtractor moveMetricsExtractor;
+    private final AnalyseResultExporter analyseResultExporter;
 
-    public RunKataGo(MoveMetricsExtractor moveMetricsExtractor) {
+    public RunKataGo(MoveMetricsExtractor moveMetricsExtractor,AnalyseResultExporter analyseResultExporter) {
         this.moveMetricsExtractor = moveMetricsExtractor;
+        this.analyseResultExporter = analyseResultExporter;
     }
 
     static int calculateAnalyseTimeMs(Integer noOfMove, Integer runTimeSec, Integer moveNo) {
@@ -102,7 +102,7 @@ public class RunKataGo implements CommandLineRunner {
                     "-override-config", "reportAnalysisWinratesAs=" + reportAnalysisWinratesAs);
             Process kataGoProcess = processBuilder.start();
             ExecutorService readInputNewSingleThreadExecutor = Executors.newSingleThreadExecutor();
-            final List<MoveMetrics> moveMetrics = new ArrayList<>();
+            final List<MoveMetrics> moveMetricsList = new ArrayList<>();
             readInputNewSingleThreadExecutor.execute(() -> {
                 try (BufferedReader input = new BufferedReader(
                         new InputStreamReader(kataGoProcess.getInputStream()));) {
@@ -183,7 +183,7 @@ public class RunKataGo implements CommandLineRunner {
                         output.newLine();
                         output.flush();
                         Thread.sleep(50);
-                        moveMetrics.add(lastMoveWinrate.getAndSet(null));
+                        moveMetricsList.add(lastMoveWinrate.getAndSet(null));
                     }
                     output.append("quit");
                     isEnd = true;
@@ -201,32 +201,7 @@ public class RunKataGo implements CommandLineRunner {
             writeOutputSingleThreadExecutor.shutdown();
             kataGoProcess.destroy();
             log.info("Win Rate:");
-            List<MoveMetrics> winrateChanges = MoveMetrics.calculateWinrateChanges(moveMetrics);
-            for (MoveMetrics winrate : moveMetrics) {
-                log.info(
-                        winrate.getMoveNo() + "\t" + winrate.getBlackWinrate() + "\t" + winrate.getBlackScoreMean());
-            }
-
-            winrateChanges.sort(Comparator.comparing(MoveMetrics::getRateChange));
-            log.info("Bad move");
-            for (int i = 0; i < 3; i++) {
-                MoveMetrics winrate = winrateChanges.get(i);
-                System.out.print(winrate.getMoveNo() + 1 + "("
-                        + winrate.getRateChange().setScale(2, RoundingMode.HALF_EVEN) + "%)");
-                if (i < 2) {
-                    System.out.print(", ");
-                }
-            }
-            log.info("");
-            log.info("Good move");
-            for (int i = winrateChanges.size() - 1; i > winrateChanges.size() - 4; i--) {
-                MoveMetrics winrate = winrateChanges.get(i);
-                System.out.print(winrate.getMoveNo() + 1 + "("
-                        + winrate.getRateChange().setScale(2, RoundingMode.HALF_EVEN) + "%)");
-                if (i > winrateChanges.size() - 3) {
-                    System.out.print(", ");
-                }
-            }
+            analyseResultExporter.export(AnalyseResult.builder().moveMetricsList(moveMetricsList).build());
         } catch (IOException e) {
             throw new RuntimeException(e);
         } catch (InterruptedException e) {
