@@ -1,13 +1,13 @@
 package analyse;
 
 import com.toomasr.sgf4j.parser.Game;
-import lombok.extern.java.Log;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
 import java.io.*;
 import java.math.BigDecimal;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -16,27 +16,21 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Component
-@Log
+@Slf4j
 public class RunKataGo implements CommandLineRunner {
 
-    @Value("${path.kataGoPath}")
-    private String kataGoPath;
-    @Value("${path.sgfFolder}")
-    private String sgfFolder;
-    @Value("${path.weightPath}")
-    private String weightPath;
-    @Value("${path.configFilePath}")
-    private String configFilePath;
-    public static volatile boolean isEnd = false;
-    public static volatile boolean isReady = false;
-    public static volatile int completeAnalyzeMoveNo = 0;
+    private static volatile boolean isEnd = false;
+    private static volatile boolean isReady = false;
+    private static volatile int completeAnalyzeMoveNo = 0;
     private static volatile AtomicBoolean isCompleteAnalyze = new AtomicBoolean(false);
     private static volatile AtomicReference<MoveMetrics> lastMoveWinrate = new AtomicReference<>(null);
     private static final String reportAnalysisWinratesAs = "SIDETOMOVE";
     private final MoveMetricsExtractor moveMetricsExtractor;
     private final AnalyseResultExporter analyseResultExporter;
+    private final ApplicationConfig applicationConfig;
 
-    public RunKataGo(MoveMetricsExtractor moveMetricsExtractor,AnalyseResultExporter analyseResultExporter) {
+    public RunKataGo(ApplicationConfig applicationConfig, MoveMetricsExtractor moveMetricsExtractor, AnalyseResultExporter analyseResultExporter) {
+        this.applicationConfig = applicationConfig;
         this.moveMetricsExtractor = moveMetricsExtractor;
         this.analyseResultExporter = analyseResultExporter;
     }
@@ -94,11 +88,15 @@ public class RunKataGo implements CommandLineRunner {
         if (komi == null) {
             throw new IllegalArgumentException("no komi");
         }
+        final String rule = game.getProperty("RU");
+        if (rule == null) {
+            throw new IllegalArgumentException("no rule");
+        }
         final Integer noOfMove = game.getNoMoves();
         try {
 
-            ProcessBuilder processBuilder = new ProcessBuilder(kataGoPath, "gtp", "-config", configFilePath,
-                    "-model", weightPath,
+            ProcessBuilder processBuilder = new ProcessBuilder(applicationConfig.getKataGoPath(), "gtp", "-config", applicationConfig.getConfigFilePath(),
+                    "-model", applicationConfig.getWeightPath(),
                     "-override-config", "reportAnalysisWinratesAs=" + reportAnalysisWinratesAs);
             Process kataGoProcess = processBuilder.start();
             ExecutorService readInputNewSingleThreadExecutor = Executors.newSingleThreadExecutor();
@@ -108,21 +106,19 @@ public class RunKataGo implements CommandLineRunner {
                         new InputStreamReader(kataGoProcess.getInputStream()));) {
                     String line;
                     int moveNo = 0;
-                    MoveMetrics moveWinRate = null;
                     while ((line = input.readLine()) != null) {
                         if (line.startsWith("info move")) {
                             log.info("I " + line);
                             lastMoveWinrate.set(moveMetricsExtractor.extractMoveMetrics(moveNo + 1, line));
+                            if (isCompleteAnalyze.getAndSet(false)) {
+                                log.info(line);
+                                moveNo++;
+                            }
                         }
-                        if (isCompleteAnalyze.getAndSet(false)) {
-                            log.info(line);
-                            moveNo++;
-                        }
-                        // log.info("debug out" + line);
                     }
 
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    log.error("Read kata output error", e);
                 }
             });
             ExecutorService readErrorNewSingleThreadExecutor = Executors.newSingleThreadExecutor();
@@ -137,12 +133,11 @@ public class RunKataGo implements CommandLineRunner {
                             log.info("E " + line);
                         }
                         if (line.startsWith("GTP ready, beginning main protocol loop")) {
-
                             isReady = true;
                         }
                     }
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    log.error("Read kata ready input error", e);
                 }
             });
             ExecutorService writeOutputSingleThreadExecutor = Executors.newSingleThreadExecutor();
@@ -156,7 +151,7 @@ public class RunKataGo implements CommandLineRunner {
                 }
                 try (BufferedWriter output = new BufferedWriter(
                         new OutputStreamWriter(kataGoProcess.getOutputStream()));) {
-
+                    List<String> moveCommands = SgfParser.toMoveCommands(game);
                     output.newLine();
                     output.append("boardsize 19");
                     output.newLine();
@@ -164,10 +159,10 @@ public class RunKataGo implements CommandLineRunner {
                         while (isCompleteAnalyze.get()) {
                             Thread.sleep(50);
                         }
-                        log.info("analyze move " + i);
+                        String moveCommand = moveCommands.get(i - 1);
+                        log.info("analyze move " + i + " " + moveCommand);
                         int analyseTimeMs = calculateAnalyseTimeMs(noOfMove, runTimeSec, i);
-                        String sgfPath = getSgfPath(sgfName);
-                        output.append("loadsgf " + sgfPath + " " + i);
+                        output.append("play " + moveCommand);
                         output.newLine();
                         output.append("komi " + komi);
                         output.newLine();
@@ -179,9 +174,6 @@ public class RunKataGo implements CommandLineRunner {
                         while (lastMoveWinrate.get() == null) {
                             Thread.sleep(50);
                         }
-                        output.append("name");
-                        output.newLine();
-                        output.flush();
                         Thread.sleep(50);
                         moveMetricsList.add(lastMoveWinrate.getAndSet(null));
                     }
@@ -200,8 +192,8 @@ public class RunKataGo implements CommandLineRunner {
             readErrorNewSingleThreadExecutor.shutdown();
             writeOutputSingleThreadExecutor.shutdown();
             kataGoProcess.destroy();
-            log.info("Win Rate:");
-            analyseResultExporter.export(AnalyseResult.builder().moveMetricsList(moveMetricsList).build());
+            analyseResultExporter.export(AnalyseResult.builder().sgfName(sgfName)
+                    .moveMetricsList(moveMetricsList).build());
         } catch (IOException e) {
             throw new RuntimeException(e);
         } catch (InterruptedException e) {
@@ -209,7 +201,7 @@ public class RunKataGo implements CommandLineRunner {
         }
     }
 
-    private String getSgfPath(final String sgfName) {
-        return sgfFolder + sgfName + ".sgf";
+    private Path getSgfPath(final String sgfName) {
+        return applicationConfig.getSgfFolderPath().resolve(sgfName + ".sgf");
     }
 }

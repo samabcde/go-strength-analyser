@@ -1,13 +1,11 @@
 package analyse;
 
-import lombok.extern.java.Log;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-@Log
+@Slf4j
 public class SgfAnalyseApplication {
 
     public static void main(String[] args) {
