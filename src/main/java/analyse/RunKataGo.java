@@ -5,25 +5,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
-import java.io.*;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 @Component
 @Slf4j
 public class RunKataGo implements CommandLineRunner {
 
-    private static volatile boolean isEnd = false;
-    private static volatile boolean isReady = false;
-    private static volatile int completeAnalyzeMoveNo = 0;
-    private static volatile AtomicBoolean isCompleteAnalyze = new AtomicBoolean(false);
-    private static volatile AtomicReference<MoveMetrics> lastMoveWinrate = new AtomicReference<>(null);
     private static final String reportAnalysisWinratesAs = "SIDETOMOVE";
     private final MoveMetricsExtractor moveMetricsExtractor;
     private final AnalyseResultExporter analyseResultExporter;
@@ -84,116 +73,34 @@ public class RunKataGo implements CommandLineRunner {
         final Integer runTimeSec = Integer.valueOf(runTimeSecStr);
         final String sgfName = sgfNameStr;
         Game game = SgfParser.parseGame(getSgfPath(sgfName));
-        final String komi = game.getProperty("KM");
-        if (komi == null) {
+        if (game.getProperty("KM") == null) {
             throw new IllegalArgumentException("no komi");
         }
-        final String rule = game.getProperty("RU");
-        if (rule == null) {
+        if (game.getProperty("RU") == null) {
             throw new IllegalArgumentException("no rule");
         }
-        final Integer noOfMove = game.getNoMoves();
+        AnalyseProcessState analyseProcessState = new AnalyseProcessState();
         try {
 
             ProcessBuilder processBuilder = new ProcessBuilder(applicationConfig.getKataGoPath(), "gtp", "-config", applicationConfig.getConfigFilePath(),
                     "-model", applicationConfig.getWeightPath(),
                     "-override-config", "reportAnalysisWinratesAs=" + reportAnalysisWinratesAs);
             Process kataGoProcess = processBuilder.start();
-            ExecutorService readInputNewSingleThreadExecutor = Executors.newSingleThreadExecutor();
-            final List<MoveMetrics> moveMetricsList = new ArrayList<>();
-            readInputNewSingleThreadExecutor.execute(() -> {
-                try (BufferedReader input = new BufferedReader(
-                        new InputStreamReader(kataGoProcess.getInputStream()));) {
-                    String line;
-                    int moveNo = 0;
-                    while ((line = input.readLine()) != null) {
-                        if (line.startsWith("info move")) {
-                            log.info("I " + line);
-                            lastMoveWinrate.set(moveMetricsExtractor.extractMoveMetrics(moveNo + 1, line));
-                            if (isCompleteAnalyze.getAndSet(false)) {
-                                log.info(line);
-                                moveNo++;
-                            }
-                        }
-                    }
-
-                } catch (IOException e) {
-                    log.error("Read kata output error", e);
-                }
-            });
-            ExecutorService readErrorNewSingleThreadExecutor = Executors.newSingleThreadExecutor();
-            readErrorNewSingleThreadExecutor.execute(() -> {
-                try (BufferedReader input = new BufferedReader(
-                        new InputStreamReader(kataGoProcess.getErrorStream()));) {
-                    String line;
-
-                    while ((line = input.readLine()) != null) {
-                        log.info(line);
-                        if (line.startsWith("NN eval")) {
-                            log.info("E " + line);
-                        }
-                        if (line.startsWith("GTP ready, beginning main protocol loop")) {
-                            isReady = true;
-                        }
-                    }
-                } catch (IOException e) {
-                    log.error("Read kata ready input error", e);
-                }
-            });
-            ExecutorService writeOutputSingleThreadExecutor = Executors.newSingleThreadExecutor();
-            writeOutputSingleThreadExecutor.execute(() -> {
-                while (!isReady) {
-                    try {
-                        Thread.sleep(2000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-                try (BufferedWriter output = new BufferedWriter(
-                        new OutputStreamWriter(kataGoProcess.getOutputStream()));) {
-                    List<String> moveCommands = SgfParser.toMoveCommands(game);
-                    output.newLine();
-                    output.append("boardsize 19");
-                    output.newLine();
-                    for (int i = 1; i <= noOfMove; i++) {
-                        while (isCompleteAnalyze.get()) {
-                            Thread.sleep(50);
-                        }
-                        String moveCommand = moveCommands.get(i - 1);
-                        log.info("analyze move " + i + " " + moveCommand);
-                        int analyseTimeMs = calculateAnalyseTimeMs(noOfMove, runTimeSec, i);
-                        output.append("play " + moveCommand);
-                        output.newLine();
-                        output.append("komi " + komi);
-                        output.newLine();
-                        output.append("kata-analyze " + 50);
-                        output.newLine();
-                        output.flush();
-                        Thread.sleep(analyseTimeMs);
-                        isCompleteAnalyze.compareAndSet(false, true);
-                        while (lastMoveWinrate.get() == null) {
-                            Thread.sleep(50);
-                        }
-                        Thread.sleep(50);
-                        moveMetricsList.add(lastMoveWinrate.getAndSet(null));
-                    }
-                    output.append("quit");
-                    isEnd = true;
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            });
-            while (!isEnd) {
+            ReadWinrateExecutor readWinrateExecutor = new ReadWinrateExecutor(kataGoProcess.getInputStream(), analyseProcessState, moveMetricsExtractor);
+            readWinrateExecutor.start();
+            CheckReadinessExecutor checkReadinessExecutor = new CheckReadinessExecutor(kataGoProcess.getErrorStream(), analyseProcessState);
+            checkReadinessExecutor.start();
+            RunMoveExecutor runMoveExecutor = new RunMoveExecutor(kataGoProcess.getOutputStream(), game, analyseProcessState, runTimeSec);
+            runMoveExecutor.start();
+            while (!analyseProcessState.isEnd) {
                 Thread.sleep(2000);
             }
-            readInputNewSingleThreadExecutor.shutdown();
-            readErrorNewSingleThreadExecutor.shutdown();
-            writeOutputSingleThreadExecutor.shutdown();
+            readWinrateExecutor.stop();
+            checkReadinessExecutor.stop();
+            runMoveExecutor.stop();
             kataGoProcess.destroy();
             analyseResultExporter.export(AnalyseResult.builder().sgfName(sgfName)
-                    .moveMetricsList(moveMetricsList).build());
+                    .moveMetricsList(analyseProcessState.moveMetricsList).build());
         } catch (IOException e) {
             throw new RuntimeException(e);
         } catch (InterruptedException e) {

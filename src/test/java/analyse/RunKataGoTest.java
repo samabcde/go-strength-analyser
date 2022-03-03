@@ -7,6 +7,10 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import java.nio.file.Path;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
 @ExtendWith(SpringExtension.class)
 @EnableConfigurationProperties(value = ApplicationConfig.class)
 @TestPropertySource({"classpath:application.properties", "classpath:test.properties"})
@@ -22,6 +26,7 @@ class RunKataGoTest {
         System.out.println(applicationConfig);
         RunKataGo runKataGo = new RunKataGo(applicationConfig, moveMetricsExtractor, analyseResultExporter);
         runKataGo.run("-runTimeSec=1", "-sgfName=runKataGoTest");
+        assertThat(Path.of(applicationConfig.getOutputFileFolder() + "/runKataGoTest.txt")).isNotEmptyFile();
     }
 
 }
