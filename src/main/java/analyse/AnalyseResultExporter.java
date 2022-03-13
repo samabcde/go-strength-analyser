@@ -6,7 +6,9 @@ import org.springframework.stereotype.Component;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.math.RoundingMode;
+import java.math.BigDecimal;
+import java.text.NumberFormat;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -24,11 +26,14 @@ public class AnalyseResultExporter {
         String outputFilePath = applicationConfig.getOutputFileFolder() + analyseResult.getSgfName() + ".txt";
         try (PrintWriter writer = new PrintWriter(new FileWriter(applicationConfig.getOutputFileFolder() + analyseResult.getSgfName() + ".txt"))) {
             List<MoveMetrics> moveMetricsList = analyseResult.getMoveMetricsList();
+            writer.println("Strength Score:");
+            writer.println("Black:" + analyseResult.getBlackStrengthScore());
+            writer.println("White:" + analyseResult.getWhiteStrengthScore());
             writer.println("Win Rate:");
-            List<MoveMetrics> winrateChanges = MoveMetrics.calculateWinrateChanges(moveMetricsList);
+            List<MoveMetrics> winrateChanges = new ArrayList<>(moveMetricsList);
             for (MoveMetrics moveMetric : moveMetricsList) {
                 writer.println(
-                        moveMetric.getMoveNo() + "\t" + moveMetric.getBlackWinrate() + "\t" + moveMetric.getBlackScoreMean());
+                        moveMetric.getMoveNo() + "\t" + moveMetric.getBlackWinratePercentage() + "\t" + moveMetric.getBlackScoreMean() + "\t" + moveMetric.details());
             }
 
             winrateChanges.sort(Comparator.comparing(MoveMetrics::getRateChange));
@@ -36,7 +41,7 @@ public class AnalyseResultExporter {
             for (int i = 0; i < 3; i++) {
                 MoveMetrics winrate = winrateChanges.get(i);
                 writer.print(winrate.getMoveNo() + 1 + "("
-                        + winrate.getRateChange().setScale(2, RoundingMode.HALF_EVEN) + "%)");
+                        + formatPercentage(winrate.getRateChange()) + ")");
                 if (i < 2) {
                     writer.print(", ");
                 }
@@ -46,7 +51,7 @@ public class AnalyseResultExporter {
             for (int i = winrateChanges.size() - 1; i > winrateChanges.size() - 4; i--) {
                 MoveMetrics winrate = winrateChanges.get(i);
                 writer.print(winrate.getMoveNo() + 1 + "("
-                        + winrate.getRateChange().setScale(2, RoundingMode.HALF_EVEN) + "%)");
+                        + formatPercentage(winrate.getRateChange()) + ")");
                 if (i > winrateChanges.size() - 3) {
                     writer.print(", ");
                 }
@@ -57,4 +62,12 @@ public class AnalyseResultExporter {
             throw new RuntimeException(e);
         }
     }
+
+    private static String formatPercentage(BigDecimal value) {
+        NumberFormat defaultFormat = NumberFormat.getPercentInstance();
+        defaultFormat.setMinimumFractionDigits(2);
+        defaultFormat.setMaximumFractionDigits(2);
+        return defaultFormat.format(value);
+    }
+
 }

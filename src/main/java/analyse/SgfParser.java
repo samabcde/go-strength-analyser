@@ -41,6 +41,9 @@ public class SgfParser {
         List<String> moveCommands = new ArrayList<>();
         GameNode node = game.getFirstMove();
         do {
+            if (!node.getProperties().containsKey("B") && !node.getProperties().containsKey("W")) {
+                continue;
+            }
             moveCommands.add(node.getColor() + " " + (node.getMoveString().equals("") ? "pass" :
                     Util.alphabet[node.getCoords()[0]] + (node.getCoords()[1] + 1)));
             System.out.println(node.getColor() + " " + node.getMoveString() + " " + (node.getMoveString() == null || node.getMoveString().equals("") ? "" : Arrays.toString(node.getCoords())));

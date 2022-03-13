@@ -10,16 +10,16 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @Slf4j
-public class ReadWinrateExecutor {
+public class ReadMetricExecutor {
     private final InputStream inputStream;
     private final AnalyseProcessState analyseProcessState;
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
-    private final MoveMetricsExtractor moveMetricsExtractor;
+    private final MoveMetricExtractor moveMetricExtractor;
 
-    public ReadWinrateExecutor(InputStream inputStream, AnalyseProcessState analyseProcessState, MoveMetricsExtractor moveMetricsExtractor) {
+    public ReadMetricExecutor(InputStream inputStream, AnalyseProcessState analyseProcessState, MoveMetricExtractor moveMetricExtractor) {
         this.inputStream = inputStream;
         this.analyseProcessState = analyseProcessState;
-        this.moveMetricsExtractor = moveMetricsExtractor;
+        this.moveMetricExtractor = moveMetricExtractor;
     }
 
     void start() {
@@ -27,14 +27,12 @@ public class ReadWinrateExecutor {
             try (BufferedReader input = new BufferedReader(
                     new InputStreamReader(inputStream))) {
                 String line;
-                int moveNo = 0;
                 while ((line = input.readLine()) != null) {
                     if (line.startsWith("info move")) {
                         log.info("I " + line);
-                        analyseProcessState.lastMoveWinrate.set(moveMetricsExtractor.extractMoveMetrics(moveNo + 1, line));
+                        analyseProcessState.lastMoveMetric.set(moveMetricExtractor.extractMoveMetric(analyseProcessState.currentMoveNo, line));
                         if (analyseProcessState.isCompleteAnalyze.getAndSet(false)) {
                             log.info(line);
-                            moveNo++;
                         }
                     }
                 }

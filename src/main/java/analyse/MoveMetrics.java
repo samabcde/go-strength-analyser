@@ -1,62 +1,88 @@
 package analyse;
 
+import analyse.calculate.CalculateUtils;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
+import java.math.MathContext;
 import java.util.List;
 
 @ToString
 @Builder
 @EqualsAndHashCode
 public class MoveMetrics {
-
+    private MoveMetric ai;
+    private MoveMetric pass;
+    private MoveMetric candidate;
     @Getter
     private final Integer moveNo;
-    @Getter
-    private final BigDecimal winrate;
-    @Getter
-    private final BigDecimal scoreMean;
-    @EqualsAndHashCode.Exclude
-    @Getter
-    private BigDecimal rateChange;
-
-    static List<MoveMetrics> calculateWinrateChanges(List<MoveMetrics> winrates) {
-        List<MoveMetrics> winrateChanges = new ArrayList<>();
-        for (int i = 0; i < winrates.size() - 1; i++) {
-            winrates.get(i).calculateRateChange(winrates.get(i + 1).getBlackWinrate());
-            winrateChanges.add(winrates.get(i));
-        }
-        return winrateChanges;
-    }
-
-    public MoveMetrics(Integer moveNo, BigDecimal winrate, BigDecimal scoreMean, BigDecimal rateChange) {
-        this.moveNo = moveNo;
-        this.winrate = winrate;
-        this.scoreMean = scoreMean;
-        this.rateChange = rateChange;
-    }
-
-    public MoveMetrics(Integer moveNo, BigDecimal winrate, BigDecimal scoreMean) {
-        this.moveNo = moveNo;
-        this.winrate = winrate;
-        this.scoreMean = scoreMean;
-    }
 
     public BigDecimal getBlackWinrate() {
-        return this.moveNo % 2 == 0 ? this.winrate : new BigDecimal("100").subtract(winrate);
+        return this.candidate.getBlackWinrate();
+    }
+
+    public BigDecimal getBlackWinratePercentage() {
+        return this.candidate.getBlackWinratePercentage();
     }
 
     public BigDecimal getBlackScoreMean() {
-        return this.moveNo % 2 == 0 ? scoreMean : scoreMean.negate();
+        return this.candidate.getBlackScoreMean();
     }
 
-    public void calculateRateChange(BigDecimal nextBlackWinrate) {
-        BigDecimal blackRateChange = (nextBlackWinrate.subtract(this.getBlackWinrate()));
-        this.rateChange = this.moveNo % 2 == 1 ? blackRateChange.negate() : blackRateChange;
+    public BigDecimal getRateChange() {
+        return this.candidate.getBlackWinrate().subtract(this.ai.getBlackWinrate());
     }
 
+    public BigDecimal getStrengthScore() {
+        return CalculateUtils.average(List.of(getWinrateStrengthScore(), getScoreLeadStrengthScore())).multiply(BigDecimal.valueOf(1000));
+    }
+
+    private BigDecimal getWinrateStrengthScore() {
+        return calculateStrengthScore(candidate.getRespectiveWinrate(), pass.getRespectiveWinrate(), ai.getRespectiveWinrate());
+    }
+
+    private BigDecimal getScoreLeadStrengthScore() {
+        return calculateStrengthScore(candidate.getRespectiveScoreMean(), pass.getRespectiveScoreMean(), ai.getRespectiveScoreMean());
+    }
+
+    // y = (x - x1)/(x2 - x1)
+    private BigDecimal calculateStrengthScore(BigDecimal x, BigDecimal x1, BigDecimal x2) {
+        if (x1.compareTo(x2) >= 0) {
+            return BigDecimal.ONE;
+        }
+        if (x.compareTo(x2) > 0) {
+            x = x2;
+        }
+        if (x.compareTo(x1) < 0) {
+            x = x1;
+        }
+        BigDecimal y = (x.subtract(x1)).divide(x2.subtract(x1), MathContext.DECIMAL64);
+        return y;
+    }
+
+    public String details() {
+        BigDecimal strengthScore = getStrengthScore();
+        BigDecimal winrateStrengthScore = getWinrateStrengthScore();
+        BigDecimal scoreLeadStrengthScore = getScoreLeadStrengthScore();
+        BigDecimal aiWinrate = ai.getRespectiveWinrate();
+        BigDecimal candidateWinrate = candidate.getRespectiveWinrate();
+        BigDecimal passWinrate = pass.getRespectiveWinrate();
+        BigDecimal aiScoreMean = ai.getRespectiveScoreMean();
+        BigDecimal candidateScoreMean = candidate.getRespectiveScoreMean();
+        BigDecimal passScoreMean = pass.getRespectiveScoreMean();
+
+        return strengthScore + "\t" + winrateStrengthScore + "\t" + scoreLeadStrengthScore + "\t" + aiWinrate + "\t" + candidateWinrate + "\t" + passWinrate
+                + "\t" + aiScoreMean + "\t" + candidateScoreMean + "\t" + passScoreMean;
+    }
+
+    public boolean isBlack() {
+        return this.moveNo % 2 == 1;
+    }
+
+    public boolean isWhite() {
+        return !isBlack();
+    }
 }

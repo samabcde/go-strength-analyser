@@ -1,5 +1,6 @@
 package analyse;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,16 +18,45 @@ import static org.assertj.core.api.Assertions.assertThat;
 class RunKataGoTest {
 
     @Autowired
-    ApplicationConfig applicationConfig;
+    private ApplicationConfig applicationConfig;
+
+    private RunKataGo runKataGo;
+
+    @BeforeEach
+    void setup() {
+        MoveMetricExtractor moveMetricExtractor = new MoveMetricExtractor();
+        AnalyseResultExporter analyseResultExporter = new AnalyseResultExporter(applicationConfig);
+        System.out.println(applicationConfig);
+        runKataGo = new RunKataGo(applicationConfig, moveMetricExtractor, analyseResultExporter);
+    }
 
     @Test
     public void runSuccess() {
-        MoveMetricsExtractor moveMetricsExtractor = new MoveMetricsExtractor();
-        AnalyseResultExporter analyseResultExporter = new AnalyseResultExporter(applicationConfig);
-        System.out.println(applicationConfig);
-        RunKataGo runKataGo = new RunKataGo(applicationConfig, moveMetricsExtractor, analyseResultExporter);
-        runKataGo.run("-runTimeSec=1", "-sgfName=runKataGoTest");
+        runKataGo.run("-runTimeSec=150", "-sgfName=runKataGoTest");
         assertThat(Path.of(applicationConfig.getOutputFileFolder() + "/runKataGoTest.txt")).isNotEmptyFile();
     }
 
+    @Test
+    public void runPro() {
+        runKataGo.run("-runTimeSec=1800", "-sgfName=smj_ysc");
+        assertThat(Path.of(applicationConfig.getOutputFileFolder() + "/smj_ysc.txt")).isNotEmptyFile();
+    }
+
+    @Test
+    public void runWeak() {
+        runKataGo.run("-runTimeSec=150", "-sgfName=20k");
+        assertThat(Path.of(applicationConfig.getOutputFileFolder() + "/20k.txt")).isNotEmptyFile();
+    }
+
+    @Test
+    public void runWeak2() {
+        runKataGo.run("-runTimeSec=150", "-sgfName=25k");
+        assertThat(Path.of(applicationConfig.getOutputFileFolder() + "/25k.txt")).isNotEmptyFile();
+    }
+
+    @Test
+    public void runKataSelf() {
+        runKataGo.run("-runTimeSec=150", "-sgfName=kata_self");
+        assertThat(Path.of(applicationConfig.getOutputFileFolder() + "/kata_self.txt")).isNotEmptyFile();
+    }
 }

@@ -45,39 +45,81 @@ public class RunMoveExecutor {
                 output.newLine();
                 output.append("boardsize 19");
                 output.newLine();
+                output.append("komi " + komi);
+                output.newLine();
+                output.flush();
+                MoveMetric initial = analyzeMove(output, "", noOfMove);
+                String aiMove = initial.getMove();
                 for (int i = 1; i <= noOfMove; i++) {
-                    while (analyseProcessState.isCompleteAnalyze.get()) {
-                        Thread.sleep(50);
-                    }
+                    analyseProcessState.currentMoveNo = i;
                     String moveCommand = moveCommands.get(i - 1);
-                    log.info("analyze move " + i + " " + moveCommand);
-                    int analyseTimeMs = RunKataGo.calculateAnalyseTimeMs(noOfMove, runTimeSec, i);
+                    MoveMetric candidate = analyzeMove(output, moveCommand, noOfMove);
+                    MoveMetric ai = analyzeMove(output, moveCommand.split(" ")[0] + " " + aiMove, noOfMove);
+                    aiMove = candidate.getMove();
+                    MoveMetric pass = analyzeMove(output, moveCommand.split(" ")[0] + " " + "pass", noOfMove);
+                    analyseProcessState.moveMetricsList.add(MoveMetrics.builder().moveNo(i).ai(ai).candidate(candidate).pass(pass).build());
                     output.append("play " + moveCommand);
                     output.newLine();
-                    output.append("komi " + komi);
-                    output.newLine();
-                    output.append("kata-analyze " + 50);
-                    output.newLine();
                     output.flush();
-                    Thread.sleep(analyseTimeMs);
-                    analyseProcessState.isCompleteAnalyze.compareAndSet(false, true);
-                    while (analyseProcessState.lastMoveWinrate.get() == null) {
-                        Thread.sleep(50);
-                    }
-                    Thread.sleep(50);
-                    moveMetricsList.add(analyseProcessState.lastMoveWinrate.getAndSet(null));
                 }
                 output.append("quit");
                 analyseProcessState.isEnd = true;
             } catch (IOException e) {
-                e.printStackTrace();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+                throw new RuntimeException(e);
             }
         });
     }
 
+    private MoveMetric analyzeMove(BufferedWriter output, String moveCommand, int noOfMove) throws IOException {
+        while (analyseProcessState.isCompleteAnalyze.get()) {
+            sleep(50);
+        }
+        log.info("analyze move " + analyseProcessState.currentMoveNo + " with " + moveCommand);
+        int analyseTimeMs = RunKataGo.calculateAnalyseTimeMs(noOfMove, runTimeSec, analyseProcessState.currentMoveNo);
+        if (!moveCommand.isEmpty()) {
+            output.append("play " + moveCommand);
+            output.newLine();
+        }
+        output.append("kata-analyze " + 50);
+        output.newLine();
+        output.flush();
+        sleep(analyseTimeMs);
+        while (!analyseProcessState.isCompleteAnalyze.compareAndSet(false, true)) {
+            sleep(50);
+        }
+        while (analyseProcessState.lastMoveMetric.get() == null) {
+            sleep(50);
+        }
+        sleep(analyseTimeMs);
+        output.append("protocol version");
+        output.newLine();
+        output.flush();
+        if (!moveCommand.isEmpty()) {
+//            if (analyseProcessState.currentMoveNo == 1) {
+//                output.append("clear_board");
+//            } else {
+//                output.append("undo");
+//            }
+            output.append("undo");
+            output.newLine();
+            output.flush();
+        }
+        MoveMetric result = analyseProcessState.lastMoveMetric.getAndSet(null);
+        if (result.getMoveNo() != analyseProcessState.currentMoveNo) {
+            throw new IllegalStateException("result move no.:" + result.getMoveNo() + " current: " + analyseProcessState.currentMoveNo);
+        }
+        return result;
+    }
+
     void stop() {
         executorService.shutdown();
+    }
+
+    private static void sleep(long milisec) {
+        try {
+            Thread.sleep(milisec);
+        } catch (InterruptedException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 }
