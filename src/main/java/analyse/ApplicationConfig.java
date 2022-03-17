@@ -2,69 +2,85 @@ package analyse;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.Resource;
 
-import java.net.URISyntaxException;
+import java.io.IOException;
 import java.nio.file.Path;
 
 @Configuration
 @ConfigurationProperties(prefix = "path")
 public class ApplicationConfig {
-    private String kataGoPath;
-    private String sgfFolder;
-    private String weightPath;
-    private String configFilePath;
-    private String outputFileFolder;
+    private Resource kataGoPath;
+    private Resource sgfFolder;
+    private Resource weightPath;
+    private Resource configFilePath;
+    private Resource outputFileFolder;
 
-    public void setKataGoPath(String kataGoPath) {
+    public void setKataGoPath(Resource kataGoPath) {
         this.kataGoPath = kataGoPath;
     }
 
-    public void setSgfFolder(String sgfFolder) {
+    public void setSgfFolder(Resource sgfFolder) {
         this.sgfFolder = sgfFolder;
     }
 
-    public void setWeightPath(String weightPath) {
+    public void setWeightPath(Resource weightPath) {
         this.weightPath = weightPath;
     }
 
-    public void setConfigFilePath(String configFilePath) {
+    public void setConfigFilePath(Resource configFilePath) {
         this.configFilePath = configFilePath;
     }
 
-    public void setOutputFileFolder(String outputFileFolder) {
+    public void setOutputFileFolder(Resource outputFileFolder) {
         this.outputFileFolder = outputFileFolder;
     }
 
     public String getKataGoPath() {
-        return kataGoPath;
+        try {
+            return kataGoPath.getFile().getAbsolutePath();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public String getSgfFolder() {
-        return sgfFolder;
+        try {
+            return sgfFolder.getFile().getAbsolutePath();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public Path getSgfFolderPath() {
-        if (sgfFolder.startsWith("classpath:")) {
-            try {
-                return Path.of(
-                        getClass().getResource(sgfFolder.replace("classpath:", "")).toURI());
-            } catch (URISyntaxException e) {
-                throw new RuntimeException(e);
-            }
+        try {
+            return sgfFolder.getFile().toPath();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
-        return Path.of(sgfFolder);
     }
 
     public String getWeightPath() {
-        return weightPath;
+        try {
+            return weightPath.getFile().getAbsolutePath();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public String getConfigFilePath() {
-        return configFilePath;
+        try {
+            return configFilePath.getFile().getAbsolutePath();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public String getOutputFileFolder() {
-        return outputFileFolder;
+        try {
+            return outputFileFolder.getFile().getAbsolutePath();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
-
 }

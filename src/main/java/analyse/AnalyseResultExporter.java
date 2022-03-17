@@ -24,7 +24,7 @@ public class AnalyseResultExporter {
 
     public void export(AnalyseResult analyseResult) {
         String outputFilePath = applicationConfig.getOutputFileFolder() + analyseResult.getSgfName() + ".txt";
-        try (PrintWriter writer = new PrintWriter(new FileWriter(applicationConfig.getOutputFileFolder() + analyseResult.getSgfName() + ".txt"))) {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(outputFilePath))) {
             List<MoveMetrics> moveMetricsList = analyseResult.getMoveMetricsList();
             writer.println("Strength Score:");
             writer.println("Black:" + analyseResult.getBlackStrengthScore());

@@ -6,7 +6,6 @@ import com.toomasr.sgf4j.parser.GameNode;
 import com.toomasr.sgf4j.parser.Util;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -27,10 +26,6 @@ public class SgfParser {
         } while ((node = node.getNextNode()) != null);
         List<String> moveCommands = toMoveCommands(game);
         moveCommands.forEach(System.out::println);
-    }
-
-    public static Game parseGame(String sgfPath) {
-        return Sgf.createFromPath(Paths.get(sgfPath));
     }
 
     public static Game parseGame(Path sgfPath) {
