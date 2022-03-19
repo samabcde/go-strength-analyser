@@ -17,7 +17,7 @@ class MoveMetricTest {
             MoveMetric moveMetric = new MoveMetric(10, BigDecimal.valueOf(89.64), BigDecimal.valueOf(3.14));
             assertEquals(10, moveMetric.getMoveNo());
             assertEquals(BigDecimal.valueOf(89.64), moveMetric.getWinrate());
-            assertEquals(BigDecimal.valueOf(3.14), moveMetric.getScoreMean());
+            assertEquals(BigDecimal.valueOf(3.14), moveMetric.getScoreLead());
         }
     }
 
@@ -43,7 +43,7 @@ class MoveMetricTest {
     }
 
     @Nested
-    public class TestGetBlackScoreMean {
+    public class TestGetBlackScoreLead {
 
         @BeforeEach
         public void setup() {
@@ -52,15 +52,15 @@ class MoveMetricTest {
 
 
         @Test
-        public void Given_moveMetricWithOddNumberMove_Should_return_NegateOfScoreMean() {
+        public void Given_moveMetricWithOddNumberMove_Should_return_NegateOfScoreLead() {
             MoveMetric moveMetricWithOddNumber = new MoveMetric(9, BigDecimal.valueOf(89.64), BigDecimal.valueOf(3.14));
-            assertEquals(BigDecimal.valueOf(-3.14), moveMetricWithOddNumber.getBlackScoreMean());
+            assertEquals(BigDecimal.valueOf(-3.14), moveMetricWithOddNumber.getBlackScoreLead());
         }
 
         @Test
-        public void Given_moveMetricWithEvenNumberMove_Should_return_ScoreMean() {
+        public void Given_moveMetricWithEvenNumberMove_Should_return_ScoreLead() {
             MoveMetric moveMetricWithEvenNumber = new MoveMetric(10, BigDecimal.valueOf(89.64), BigDecimal.valueOf(3.14));
-            assertEquals(BigDecimal.valueOf(3.14), moveMetricWithEvenNumber.getBlackScoreMean());
+            assertEquals(BigDecimal.valueOf(3.14), moveMetricWithEvenNumber.getBlackScoreLead());
         }
 
     }

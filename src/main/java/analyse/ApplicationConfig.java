@@ -4,6 +4,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 
@@ -46,7 +47,7 @@ public class ApplicationConfig {
 
     public String getSgfFolder() {
         try {
-            return sgfFolder.getFile().getAbsolutePath();
+            return sgfFolder.getFile().getAbsolutePath() + File.separator;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -78,7 +79,7 @@ public class ApplicationConfig {
 
     public String getOutputFileFolder() {
         try {
-            return outputFileFolder.getFile().getAbsolutePath();
+            return outputFileFolder.getFile().getAbsolutePath() + File.separator;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

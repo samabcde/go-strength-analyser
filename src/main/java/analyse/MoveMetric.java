@@ -14,14 +14,14 @@ public class MoveMetric {
     @Getter
     private final BigDecimal winrate;
     @Getter
-    private final BigDecimal scoreMean;
+    private final BigDecimal scoreLead;
     @Getter
     private final String move;
 
-    public MoveMetric(int moveNo, BigDecimal winrate, BigDecimal scoreMean) {
+    public MoveMetric(int moveNo, BigDecimal winrate, BigDecimal scoreLead) {
         this.moveNo = moveNo;
         this.winrate = winrate;
-        this.scoreMean = scoreMean;
+        this.scoreLead = scoreLead;
         this.move = "";
     }
 
@@ -33,16 +33,16 @@ public class MoveMetric {
         return this.getBlackWinrate().multiply(new BigDecimal("100"));
     }
 
-    public BigDecimal getBlackScoreMean() {
-        return this.moveNo % 2 == 0 ? scoreMean : scoreMean.negate();
+    public BigDecimal getBlackScoreLead() {
+        return this.moveNo % 2 == 0 ? scoreLead : scoreLead.negate();
     }
 
     public BigDecimal getRespectiveWinrate() {
         return new BigDecimal("1").subtract(winrate);
     }
 
-    public BigDecimal getRespectiveScoreMean() {
-        return scoreMean.negate();
+    public BigDecimal getRespectiveScoreLead() {
+        return scoreLead.negate();
     }
 
     public boolean isBlack() {

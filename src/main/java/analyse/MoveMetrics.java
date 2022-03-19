@@ -28,8 +28,8 @@ public class MoveMetrics {
         return this.candidate.getBlackWinratePercentage();
     }
 
-    public BigDecimal getBlackScoreMean() {
-        return this.candidate.getBlackScoreMean();
+    public BigDecimal getBlackScoreLead() {
+        return this.candidate.getBlackScoreLead();
     }
 
     public BigDecimal getRateChange() {
@@ -45,7 +45,7 @@ public class MoveMetrics {
     }
 
     private BigDecimal getScoreLeadStrengthScore() {
-        return calculateStrengthScore(candidate.getRespectiveScoreMean(), pass.getRespectiveScoreMean(), ai.getRespectiveScoreMean());
+        return calculateStrengthScore(candidate.getRespectiveScoreLead(), pass.getRespectiveScoreLead(), ai.getRespectiveScoreLead());
     }
 
     // y = (x - x1)/(x2 - x1)
@@ -70,12 +70,12 @@ public class MoveMetrics {
         BigDecimal aiWinrate = ai.getRespectiveWinrate();
         BigDecimal candidateWinrate = candidate.getRespectiveWinrate();
         BigDecimal passWinrate = pass.getRespectiveWinrate();
-        BigDecimal aiScoreMean = ai.getRespectiveScoreMean();
-        BigDecimal candidateScoreMean = candidate.getRespectiveScoreMean();
-        BigDecimal passScoreMean = pass.getRespectiveScoreMean();
+        BigDecimal aiScoreLead = ai.getRespectiveScoreLead();
+        BigDecimal candidateScoreLead = candidate.getRespectiveScoreLead();
+        BigDecimal passScoreLead = pass.getRespectiveScoreLead();
 
         return strengthScore + "\t" + winrateStrengthScore + "\t" + scoreLeadStrengthScore + "\t" + aiWinrate + "\t" + candidateWinrate + "\t" + passWinrate
-                + "\t" + aiScoreMean + "\t" + candidateScoreMean + "\t" + passScoreMean;
+                + "\t" + aiScoreLead + "\t" + candidateScoreLead + "\t" + passScoreLead;
     }
 
     public boolean isBlack() {

@@ -23,7 +23,7 @@ public class AnalyseResultExporter {
     }
 
     public void export(AnalyseResult analyseResult) {
-        String outputFilePath = applicationConfig.getOutputFileFolder() + analyseResult.getSgfName() + ".txt";
+        String outputFilePath = applicationConfig.getOutputFileFolder()  + analyseResult.getSgfName() + ".txt";
         try (PrintWriter writer = new PrintWriter(new FileWriter(outputFilePath))) {
             List<MoveMetrics> moveMetricsList = analyseResult.getMoveMetricsList();
             writer.println("Strength Score:");
@@ -33,7 +33,7 @@ public class AnalyseResultExporter {
             List<MoveMetrics> winrateChanges = new ArrayList<>(moveMetricsList);
             for (MoveMetrics moveMetric : moveMetricsList) {
                 writer.println(
-                        moveMetric.getMoveNo() + "\t" + moveMetric.getBlackWinratePercentage() + "\t" + moveMetric.getBlackScoreMean() + "\t" + moveMetric.details());
+                        moveMetric.getMoveNo() + "\t" + moveMetric.getBlackWinratePercentage() + "\t" + moveMetric.getBlackScoreLead() + "\t" + moveMetric.details());
             }
 
             winrateChanges.sort(Comparator.comparing(MoveMetrics::getRateChange));

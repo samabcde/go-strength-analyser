@@ -19,7 +19,7 @@ class MoveMetricExtractorTest {
                 .moveNo(1)
                 .move("L15")
                 .winrate(BigDecimal.valueOf(0.00955206))
-                .scoreMean(BigDecimal.valueOf(-28.424)).build();
+                .scoreLead(BigDecimal.valueOf(-28.424)).build();
         assertEquals(expected, actual);
     }
 
@@ -31,7 +31,7 @@ class MoveMetricExtractorTest {
                 .moveNo(1)
                 .move("L15")
                 .winrate(BigDecimal.valueOf(0.00955206))
-                .scoreMean(BigDecimal.valueOf(-28.424)).build();
+                .scoreLead(BigDecimal.valueOf(-28.424)).build();
         assertEquals(expected, actual);
     }
 

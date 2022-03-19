@@ -18,7 +18,7 @@ public class MoveMetricExtractor {
         String moveInfo = moveInfos[1];
         Matcher matcher = metricsPattern.matcher(moveInfo);
         if (matcher.matches()) {
-            return MoveMetric.builder().moveNo(moveNo).move(matcher.group(1)).winrate(new BigDecimal(matcher.group(4))).scoreMean(new BigDecimal(matcher.group(5))).build();
+            return MoveMetric.builder().moveNo(moveNo).move(matcher.group(1)).winrate(new BigDecimal(matcher.group(4))).scoreLead(new BigDecimal(matcher.group(7))).build();
         } else {
             throw new IllegalArgumentException("Can't match pattern with info:" + info);
         }

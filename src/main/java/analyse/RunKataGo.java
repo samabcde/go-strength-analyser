@@ -1,11 +1,11 @@
 package analyse;
 
+import analyse.engine.KataGoFactory;
 import com.toomasr.sgf4j.parser.Game;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.nio.file.Path;
@@ -14,15 +14,16 @@ import java.nio.file.Path;
 @Slf4j
 public class RunKataGo implements CommandLineRunner {
 
-    private static final String reportAnalysisWinratesAs = "SIDETOMOVE";
     private final MoveMetricExtractor moveMetricExtractor;
     private final AnalyseResultExporter analyseResultExporter;
     private final ApplicationConfig applicationConfig;
+    private final KataGoFactory kataGoFactory;
 
-    public RunKataGo(ApplicationConfig applicationConfig, MoveMetricExtractor moveMetricExtractor, AnalyseResultExporter analyseResultExporter) {
+    public RunKataGo(ApplicationConfig applicationConfig, MoveMetricExtractor moveMetricExtractor, AnalyseResultExporter analyseResultExporter, KataGoFactory kataGoFactory) {
         this.applicationConfig = applicationConfig;
         this.moveMetricExtractor = moveMetricExtractor;
         this.analyseResultExporter = analyseResultExporter;
+        this.kataGoFactory = kataGoFactory;
     }
 
     static int calculateAnalyseTimeMs(Integer noOfMove, Integer runTimeSec, Integer moveNo) {
@@ -82,10 +83,7 @@ public class RunKataGo implements CommandLineRunner {
         }
         AnalyseProcessState analyseProcessState = new AnalyseProcessState();
         try {
-            ProcessBuilder processBuilder = new ProcessBuilder(applicationConfig.getKataGoPath(), "gtp", "-config", applicationConfig.getConfigFilePath(),
-                    "-model", applicationConfig.getWeightPath(),
-                    "-override-config", "reportAnalysisWinratesAs=" + reportAnalysisWinratesAs);
-            Process kataGoProcess = processBuilder.start();
+            Process kataGoProcess = kataGoFactory.createKataGoProcess();
             ReadMetricExecutor readWinrateExecutor = new ReadMetricExecutor(kataGoProcess.getInputStream(), analyseProcessState, moveMetricExtractor);
             readWinrateExecutor.start();
             CheckReadinessExecutor checkReadinessExecutor = new CheckReadinessExecutor(kataGoProcess.getErrorStream(), analyseProcessState);
@@ -102,8 +100,6 @@ public class RunKataGo implements CommandLineRunner {
             analyseResultExporter.export(AnalyseResult.builder().sgfName(sgfName)
                     .moveMetricsList(analyseProcessState.moveMetricsList).build());
             log.debug("all metrics: {}", analyseProcessState.moveMetricsList);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
