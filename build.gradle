@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '2.6.3'
+    id 'org.springframework.boot' version '2.6.4'
 }
 configurations {
     all*.exclude group: 'org.apache.logging.log4j', module: 'log4j-slf4j-impl'
@@ -11,9 +11,12 @@ version '1.0-SNAPSHOT'
 repositories {
     mavenCentral()
 }
+
 test {
     useJUnitPlatform()
+    exclude("**/*IntegrationTest*")
 }
+
 dependencies {
 
     compileOnly 'org.projectlombok:lombok:1.18.22'
@@ -22,14 +25,12 @@ dependencies {
     testAnnotationProcessor 'org.projectlombok:lombok:1.18.22'
     testImplementation 'org.mockito:mockito-core:4.3.1'
 
-    implementation 'org.junit.jupiter:junit-jupiter:5.8.2'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.8.2'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
 
-    // https://mvnrepository.com/artifact/com.toomasr/sgf4j-parser
-    implementation group: 'com.toomasr', name: 'sgf4j-parser', version: '0.0.6'
-    // https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter
-    implementation group: 'org.springframework.boot', name: 'spring-boot-starter', version: '2.6.3'
-    implementation group: 'org.springframework.boot', name: 'spring-boot-starter-test', version: '2.6.3'
-    annotationProcessor "org.springframework.boot:spring-boot-configuration-processor:2.6.3"
+    implementation 'com.toomasr:sgf4j-parser:0.0.6'
+    implementation 'org.springframework.boot:spring-boot-starter:2.6.4'
+    implementation 'org.springframework.boot:spring-boot-starter-test:2.6.4'
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor:2.6.4'
 }

@@ -91,7 +91,7 @@ public class RunKataGo implements CommandLineRunner {
             RunMoveExecutor runMoveExecutor = new RunMoveExecutor(kataGoProcess.getOutputStream(), game, analyseProcessState, runTimeSec);
             runMoveExecutor.start();
             while (!analyseProcessState.isEnd) {
-                Thread.sleep(2000);
+                Thread.sleep(50);
             }
             readWinrateExecutor.stop();
             checkReadinessExecutor.stop();

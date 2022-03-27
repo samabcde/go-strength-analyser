@@ -28,12 +28,13 @@ public class ReadMetricExecutor {
                     new InputStreamReader(inputStream))) {
                 String line;
                 while ((line = input.readLine()) != null) {
+                    log.debug(line);
                     if (line.startsWith("info move")) {
-                        log.info("I " + line);
                         analyseProcessState.lastMoveMetric.set(moveMetricExtractor.extractMoveMetric(analyseProcessState.currentMoveNo, line));
-                        if (analyseProcessState.isCompleteAnalyze.getAndSet(false)) {
-                            log.info(line);
-                        }
+                    }
+                    if (line.equals("= 2")) {
+                        analyseProcessState.isCompleteAnalyze.set(true);
+                        log.debug("end current move analyse");
                     }
                 }
             } catch (IOException e) {

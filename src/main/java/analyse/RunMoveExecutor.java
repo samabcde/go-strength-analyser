@@ -30,11 +30,10 @@ public class RunMoveExecutor {
         final String komi = game.getProperty("KM");
         final String rule = game.getProperty("RU");
         final Integer noOfMove = game.getNoMoves();
-        final List<MoveMetrics> moveMetricsList = analyseProcessState.moveMetricsList;
         executorService.execute(() -> {
             while (!analyseProcessState.isReady) {
                 try {
-                    Thread.sleep(500);
+                    Thread.sleep(50);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -71,38 +70,33 @@ public class RunMoveExecutor {
     }
 
     private MoveMetric analyzeMove(BufferedWriter output, String moveCommand, int noOfMove) throws IOException {
-        while (analyseProcessState.isCompleteAnalyze.get()) {
-            sleep(50);
-        }
         log.info("analyze move " + analyseProcessState.currentMoveNo + " with " + moveCommand);
         int analyseTimeMs = RunKataGo.calculateAnalyseTimeMs(noOfMove, runTimeSec, analyseProcessState.currentMoveNo);
         if (!moveCommand.isEmpty()) {
             output.append("play " + moveCommand);
             output.newLine();
+            output.flush();
         }
-        output.append("kata-analyze " + 50);
+        // 1 ms = 0.001s
+        // 1 centiSec = 0.01s
+        int intervalCentiSec = Math.max(analyseTimeMs / 10, 1);
+        output.append("kata-analyze " + intervalCentiSec);
         output.newLine();
         output.flush();
         sleep(analyseTimeMs);
-        while (!analyseProcessState.isCompleteAnalyze.compareAndSet(false, true)) {
-            sleep(50);
-        }
         while (analyseProcessState.lastMoveMetric.get() == null) {
-            sleep(50);
+            sleep(5);
         }
-        sleep(analyseTimeMs);
-        output.append("protocol version");
+        output.append("protocol_version");
         output.newLine();
         output.flush();
         if (!moveCommand.isEmpty()) {
-//            if (analyseProcessState.currentMoveNo == 1) {
-//                output.append("clear_board");
-//            } else {
-//                output.append("undo");
-//            }
             output.append("undo");
             output.newLine();
             output.flush();
+        }
+        while (!analyseProcessState.isCompleteAnalyze.compareAndSet(true, false)) {
+            sleep(5);
         }
         MoveMetric result = analyseProcessState.lastMoveMetric.getAndSet(null);
         if (result.getMoveNo() != analyseProcessState.currentMoveNo) {

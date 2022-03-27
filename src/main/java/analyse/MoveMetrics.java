@@ -37,18 +37,55 @@ public class MoveMetrics {
     }
 
     public BigDecimal getStrengthScore() {
-        return CalculateUtils.average(List.of(getWinrateStrengthScore(), getScoreLeadStrengthScore())).multiply(BigDecimal.valueOf(1000));
+        return CalculateUtils.average(List.of(getWinrateStrengthScore(), getScoreLeadStrengthScore())).multiply(BigDecimal.valueOf(10000));
     }
 
-    private BigDecimal getWinrateStrengthScore() {
+    public BigDecimal getWinrateStrengthScore() {
         return calculateStrengthScore(candidate.getRespectiveWinrate(), pass.getRespectiveWinrate(), ai.getRespectiveWinrate());
     }
 
-    private BigDecimal getScoreLeadStrengthScore() {
+    public BigDecimal getWeightedWinrateStrengthScore() {
+        return getWinrateStrengthScore().multiply(getWinrateWeight(), MathContext.DECIMAL64);
+    }
+
+    public BigDecimal getScoreLeadStrengthScore() {
         return calculateStrengthScore(candidate.getRespectiveScoreLead(), pass.getRespectiveScoreLead(), ai.getRespectiveScoreLead());
     }
 
-    // y = (x - x1)/(x2 - x1)
+    public BigDecimal getWeightedScoreLeadStrengthScore() {
+        return getScoreLeadStrengthScore().multiply(getScoreLeadWeight(), MathContext.DECIMAL64);
+    }
+
+    public BigDecimal getWinrateWeight() {
+        if (pass.getRespectiveWinrate().compareTo(ai.getRespectiveWinrate()) >= 0) {
+            return BigDecimal.ZERO;
+        }
+        return ai.getRespectiveWinrate().subtract(pass.getRespectiveWinrate());
+    }
+
+    public BigDecimal getScoreLeadWeight() {
+        if (pass.getRespectiveScoreLead().compareTo(ai.getRespectiveScoreLead()) >= 0) {
+            return BigDecimal.ZERO;
+        }
+        return ai.getRespectiveScoreLead().subtract(pass.getRespectiveScoreLead());
+    }
+
+//    // y = (x - x1)/(x2 - x1)
+//    private BigDecimal calculateStrengthScore(BigDecimal x, BigDecimal x1, BigDecimal x2) {
+//        if (x1.compareTo(x2) >= 0) {
+//            return BigDecimal.ONE;
+//        }
+//        if (x.compareTo(x2) > 0) {
+//            x = x2;
+//        }
+//        if (x.compareTo(x1) < 0) {
+//            x = x1;
+//        }
+//        BigDecimal y = (x.subtract(x1)).divide(x2.subtract(x1), MathContext.DECIMAL64);
+//        return y;
+//    }
+
+    // y = (2x - x1 - x2)/(x2 - x1)
     private BigDecimal calculateStrengthScore(BigDecimal x, BigDecimal x1, BigDecimal x2) {
         if (x1.compareTo(x2) >= 0) {
             return BigDecimal.ONE;
@@ -59,7 +96,7 @@ public class MoveMetrics {
         if (x.compareTo(x1) < 0) {
             x = x1;
         }
-        BigDecimal y = (x.subtract(x1)).divide(x2.subtract(x1), MathContext.DECIMAL64);
+        BigDecimal y = (x.multiply(BigDecimal.valueOf(2)).subtract(x1).subtract(x2)).divide(x2.subtract(x1), MathContext.DECIMAL64);
         return y;
     }
 
@@ -73,9 +110,10 @@ public class MoveMetrics {
         BigDecimal aiScoreLead = ai.getRespectiveScoreLead();
         BigDecimal candidateScoreLead = candidate.getRespectiveScoreLead();
         BigDecimal passScoreLead = pass.getRespectiveScoreLead();
-
+        BigDecimal winrateWeight = getWinrateWeight();
+        BigDecimal scoreLeadWeight = getScoreLeadWeight();
         return strengthScore + "\t" + winrateStrengthScore + "\t" + scoreLeadStrengthScore + "\t" + aiWinrate + "\t" + candidateWinrate + "\t" + passWinrate
-                + "\t" + aiScoreLead + "\t" + candidateScoreLead + "\t" + passScoreLead;
+                + "\t" + aiScoreLead + "\t" + candidateScoreLead + "\t" + passScoreLead + "\t" + winrateWeight + "\t" + scoreLeadWeight;
     }
 
     public boolean isBlack() {
