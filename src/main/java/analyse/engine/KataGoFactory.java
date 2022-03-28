@@ -1,6 +1,6 @@
 package analyse.engine;
 
-import analyse.ApplicationConfig;
+import analyse.core.ApplicationConfig;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;

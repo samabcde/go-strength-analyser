@@ -1,5 +1,6 @@
-package analyse;
+package analyse.metric;
 
+import analyse.core.AnalyseKey;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -8,25 +9,32 @@ import java.math.BigDecimal;
 @Builder
 @AllArgsConstructor
 @EqualsAndHashCode
+/*
+ * Contain data needed to calculate go strength score
+ * */
 public class MoveMetric {
     @Getter
-    private final Integer moveNo;
+    private final AnalyseKey analyseKey;
     @Getter
     private final BigDecimal winrate;
     @Getter
     private final BigDecimal scoreLead;
     @Getter
-    private final String move;
+    private final String bestMove;
 
-    public MoveMetric(int moveNo, BigDecimal winrate, BigDecimal scoreLead) {
-        this.moveNo = moveNo;
+    public MoveMetric(AnalyseKey analyseKey, BigDecimal winrate, BigDecimal scoreLead) {
+        this.analyseKey = analyseKey;
         this.winrate = winrate;
         this.scoreLead = scoreLead;
-        this.move = "";
+        this.bestMove = "";
+    }
+
+    public int getMoveNo() {
+        return this.analyseKey.moveNo();
     }
 
     public BigDecimal getBlackWinrate() {
-        return this.moveNo % 2 == 0 ? this.winrate : new BigDecimal("1").subtract(winrate);
+        return this.getMoveNo() % 2 == 0 ? this.winrate : new BigDecimal("1").subtract(winrate);
     }
 
     public BigDecimal getBlackWinratePercentage() {
@@ -34,7 +42,7 @@ public class MoveMetric {
     }
 
     public BigDecimal getBlackScoreLead() {
-        return this.moveNo % 2 == 0 ? scoreLead : scoreLead.negate();
+        return this.getMoveNo() % 2 == 0 ? scoreLead : scoreLead.negate();
     }
 
     public BigDecimal getRespectiveWinrate() {
@@ -46,7 +54,7 @@ public class MoveMetric {
     }
 
     public boolean isBlack() {
-        return this.moveNo % 2 == 0;
+        return this.getMoveNo() % 2 == 0;
     }
 
     public boolean isWhite() {

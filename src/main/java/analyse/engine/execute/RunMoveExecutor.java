@@ -1,5 +1,13 @@
-package analyse;
+package analyse.engine.execute;
 
+import analyse.core.AnalyseKey;
+import analyse.core.AnalyseTarget;
+import analyse.engine.RunKataGo;
+import analyse.info.MoveInfo;
+import analyse.metric.MoveMetric;
+import analyse.metric.MoveMetricExtractor;
+import analyse.metric.MoveMetrics;
+import analyse.sgf.SgfParser;
 import com.toomasr.sgf4j.parser.Game;
 import lombok.extern.slf4j.Slf4j;
 
@@ -16,17 +24,19 @@ public class RunMoveExecutor {
     private final OutputStream outputStream;
     private final AnalyseProcessState analyseProcessState;
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
+    private final MoveMetricExtractor moveMetricExtractor;
     private final Integer runTimeSec;
     private final Game game;
 
-    public RunMoveExecutor(OutputStream outputStream, Game game, AnalyseProcessState analyseProcessState, Integer runTimeSec) {
+    public RunMoveExecutor(OutputStream outputStream, Game game, AnalyseProcessState analyseProcessState, Integer runTimeSec, MoveMetricExtractor moveMetricExtractor) {
         this.outputStream = outputStream;
         this.game = game;
         this.analyseProcessState = analyseProcessState;
         this.runTimeSec = runTimeSec;
+        this.moveMetricExtractor = moveMetricExtractor;
     }
 
-    void start() {
+    public void start() {
         final String komi = game.getProperty("KM");
         final String rule = game.getProperty("RU");
         final Integer noOfMove = game.getNoMoves();
@@ -47,16 +57,15 @@ public class RunMoveExecutor {
                 output.append("komi " + komi);
                 output.newLine();
                 output.flush();
-                MoveMetric initial = analyzeMove(output, "", noOfMove);
-                String aiMove = initial.getMove();
-                for (int i = 1; i <= noOfMove; i++) {
-                    analyseProcessState.currentMoveNo = i;
-                    String moveCommand = moveCommands.get(i - 1);
-                    MoveMetric candidate = analyzeMove(output, moveCommand, noOfMove);
-                    MoveMetric ai = analyzeMove(output, moveCommand.split(" ")[0] + " " + aiMove, noOfMove);
-                    aiMove = candidate.getMove();
-                    MoveMetric pass = analyzeMove(output, moveCommand.split(" ")[0] + " " + "pass", noOfMove);
-                    analyseProcessState.moveMetricsList.add(MoveMetrics.builder().moveNo(i).ai(ai).candidate(candidate).pass(pass).build());
+                MoveMetric initial = analyzeMove(output, "", noOfMove, new AnalyseKey(AnalyseTarget.CANDIDATE, 0, ""));
+                String aiMove = initial.getBestMove();
+                for (int moveNo = 1; moveNo <= noOfMove; moveNo++) {
+                    String moveCommand = moveCommands.get(moveNo - 1);
+                    MoveMetric candidate = analyzeMove(output, moveCommand, noOfMove, new AnalyseKey(AnalyseTarget.CANDIDATE, moveNo, moveCommand.split(" ")[1]));
+                    MoveMetric ai = analyzeMove(output, moveCommand.split(" ")[0] + " " + aiMove, noOfMove, new AnalyseKey(AnalyseTarget.AI, moveNo, aiMove));
+                    aiMove = candidate.getBestMove();
+                    MoveMetric pass = analyzeMove(output, moveCommand.split(" ")[0] + " " + "pass", noOfMove, new AnalyseKey(AnalyseTarget.PASS, moveNo, "pass"));
+                    analyseProcessState.moveMetricsList.add(MoveMetrics.builder().moveNo(moveNo).ai(ai).candidate(candidate).pass(pass).build());
                     output.append("play " + moveCommand);
                     output.newLine();
                     output.flush();
@@ -69,9 +78,11 @@ public class RunMoveExecutor {
         });
     }
 
-    private MoveMetric analyzeMove(BufferedWriter output, String moveCommand, int noOfMove) throws IOException {
-        log.info("analyze move " + analyseProcessState.currentMoveNo + " with " + moveCommand);
-        int analyseTimeMs = RunKataGo.calculateAnalyseTimeMs(noOfMove, runTimeSec, analyseProcessState.currentMoveNo);
+    private MoveMetric analyzeMove(BufferedWriter output, String moveCommand, int noOfMove, AnalyseKey analyseKey) throws IOException {
+        analyseProcessState.currentAnalyseKey.set(analyseKey);
+        log.info("analyze " + analyseKey.analyseTarget() + " move " + analyseKey.moveNo() + " with " + analyseKey.move());
+        int analyseTimeMs = RunKataGo.calculateAnalyseTimeMs(noOfMove, runTimeSec, analyseKey.moveNo());
+
         if (!moveCommand.isEmpty()) {
             output.append("play " + moveCommand);
             output.newLine();
@@ -84,7 +95,7 @@ public class RunMoveExecutor {
         output.newLine();
         output.flush();
         sleep(analyseTimeMs);
-        while (analyseProcessState.lastMoveMetric.get() == null) {
+        while (analyseProcessState.lastMoveInfo.get() == null) {
             sleep(5);
         }
         output.append("protocol_version");
@@ -98,14 +109,15 @@ public class RunMoveExecutor {
         while (!analyseProcessState.isCompleteAnalyze.compareAndSet(true, false)) {
             sleep(5);
         }
-        MoveMetric result = analyseProcessState.lastMoveMetric.getAndSet(null);
-        if (result.getMoveNo() != analyseProcessState.currentMoveNo) {
-            throw new IllegalStateException("result move no.:" + result.getMoveNo() + " current: " + analyseProcessState.currentMoveNo);
+        MoveInfo moveInfo = analyseProcessState.lastMoveInfo.getAndSet(null);
+        if (!moveInfo.analyseKey().equals(analyseProcessState.currentAnalyseKey.get())) {
+            throw new IllegalStateException("result analyse key:" + moveInfo.analyseKey() + " current: " + analyseProcessState.currentAnalyseKey.get() + " not match");
         }
-        return result;
+        analyseProcessState.moveInfoList.add(moveInfo);
+        return moveMetricExtractor.extractMoveMetric(moveInfo);
     }
 
-    void stop() {
+    public void stop() {
         executorService.shutdown();
     }
 

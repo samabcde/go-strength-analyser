@@ -1,6 +1,17 @@
-package analyse;
+package analyse.engine;
 
-import analyse.engine.KataGoFactory;
+import analyse.core.AnalyseMetadata;
+import analyse.core.ApplicationConfig;
+import analyse.engine.execute.AnalyseProcessState;
+import analyse.engine.execute.CheckReadinessExecutor;
+import analyse.engine.execute.ReadMetricExecutor;
+import analyse.engine.execute.RunMoveExecutor;
+import analyse.info.AnalyseInfo;
+import analyse.info.AnalyseInfoExporter;
+import analyse.metric.MoveMetricExtractor;
+import analyse.result.AnalyseResult;
+import analyse.result.AnalyseResultExporter;
+import analyse.sgf.SgfParser;
 import com.toomasr.sgf4j.parser.Game;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -15,18 +26,20 @@ import java.nio.file.Path;
 public class RunKataGo implements CommandLineRunner {
 
     private final MoveMetricExtractor moveMetricExtractor;
+    private final AnalyseInfoExporter analyseInfoExporter;
     private final AnalyseResultExporter analyseResultExporter;
     private final ApplicationConfig applicationConfig;
     private final KataGoFactory kataGoFactory;
 
-    public RunKataGo(ApplicationConfig applicationConfig, MoveMetricExtractor moveMetricExtractor, AnalyseResultExporter analyseResultExporter, KataGoFactory kataGoFactory) {
+    public RunKataGo(ApplicationConfig applicationConfig, MoveMetricExtractor moveMetricExtractor, AnalyseInfoExporter analyseInfoExporter, AnalyseResultExporter analyseResultExporter, KataGoFactory kataGoFactory) {
         this.applicationConfig = applicationConfig;
         this.moveMetricExtractor = moveMetricExtractor;
+        this.analyseInfoExporter = analyseInfoExporter;
         this.analyseResultExporter = analyseResultExporter;
         this.kataGoFactory = kataGoFactory;
     }
 
-    static int calculateAnalyseTimeMs(Integer noOfMove, Integer runTimeSec, Integer moveNo) {
+    public static int calculateAnalyseTimeMs(Integer noOfMove, Integer runTimeSec, Integer moveNo) {
         BigDecimal runTimeMs = new BigDecimal(runTimeSec * 1000).divide(BigDecimal.valueOf(3), MathContext.DECIMAL64);
         BigDecimal part1TimeWeight = new BigDecimal("0.1");
         BigDecimal part2TimeWeight = new BigDecimal("0.7");
@@ -88,7 +101,7 @@ public class RunKataGo implements CommandLineRunner {
             readWinrateExecutor.start();
             CheckReadinessExecutor checkReadinessExecutor = new CheckReadinessExecutor(kataGoProcess.getErrorStream(), analyseProcessState);
             checkReadinessExecutor.start();
-            RunMoveExecutor runMoveExecutor = new RunMoveExecutor(kataGoProcess.getOutputStream(), game, analyseProcessState, runTimeSec);
+            RunMoveExecutor runMoveExecutor = new RunMoveExecutor(kataGoProcess.getOutputStream(), game, analyseProcessState, runTimeSec, moveMetricExtractor);
             runMoveExecutor.start();
             while (!analyseProcessState.isEnd) {
                 Thread.sleep(50);
@@ -97,7 +110,9 @@ public class RunKataGo implements CommandLineRunner {
             checkReadinessExecutor.stop();
             runMoveExecutor.stop();
             kataGoProcess.destroy();
-            analyseResultExporter.export(AnalyseResult.builder().sgfName(sgfName)
+            AnalyseMetadata metadata = AnalyseMetadata.builder().runTimeSec(runTimeSec).sgfName(sgfName).build();
+            analyseInfoExporter.export(AnalyseInfo.builder().metadata(metadata).moveInfoList(analyseProcessState.moveInfoList).build());
+            analyseResultExporter.export(AnalyseResult.builder().metadata(metadata)
                     .moveMetricsList(analyseProcessState.moveMetricsList).build());
             log.debug("all metrics: {}", analyseProcessState.moveMetricsList);
         } catch (InterruptedException e) {

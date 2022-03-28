@@ -1,5 +1,9 @@
-package analyse;
+package analyse.result;
 
+import analyse.core.ApplicationConfig;
+import analyse.info.MoveInfo;
+import analyse.metric.MoveMetrics;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -23,7 +27,12 @@ public class AnalyseResultExporter {
     }
 
     public void export(AnalyseResult analyseResult) {
-        String outputFilePath = applicationConfig.getOutputFileFolder()  + analyseResult.getSgfName() + ".txt";
+        exportToText(analyseResult);
+        exportRawToJson(analyseResult);
+    }
+
+    private void exportToText(AnalyseResult analyseResult) {
+        String outputFilePath = applicationConfig.getOutputFileFolder() + analyseResult.getSgfName() + ".txt";
         try (PrintWriter writer = new PrintWriter(new FileWriter(outputFilePath))) {
             List<MoveMetrics> moveMetricsList = analyseResult.getMoveMetricsList();
             writer.println("Strength Score:");
@@ -58,6 +67,17 @@ public class AnalyseResultExporter {
             }
             writer.flush();
             log.info("Exported to :{}", outputFilePath);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void exportRawToJson(AnalyseResult analyseResult) {
+        String outputFilePath = applicationConfig.getOutputFileFolder() + analyseResult.getSgfName() + ".json";
+        ObjectMapper objectMapper = new ObjectMapper();
+        List<MoveInfo> rawInfos = new ArrayList<>();
+        try (FileWriter fileWriter = new FileWriter(outputFilePath)) {
+            objectMapper.writeValue(fileWriter, rawInfos);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

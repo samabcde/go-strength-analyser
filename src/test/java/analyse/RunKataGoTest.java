@@ -1,6 +1,11 @@
 package analyse;
 
+import analyse.core.ApplicationConfig;
 import analyse.engine.KataGoFactory;
+import analyse.engine.RunKataGo;
+import analyse.info.AnalyseInfoExporter;
+import analyse.metric.MoveMetricExtractor;
+import analyse.result.AnalyseResultExporter;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,13 +38,14 @@ class RunKataGoTest {
     @BeforeEach
     void setup() {
         MoveMetricExtractor moveMetricExtractor = new MoveMetricExtractor();
+        AnalyseInfoExporter analyseInfoExporter = new AnalyseInfoExporter(applicationConfig);
         AnalyseResultExporter analyseResultExporter = new AnalyseResultExporter(applicationConfig);
         KataGoFactory kataGoFactory = mock(KataGoFactory.class);
         fakeKataGo = new FakeKataGo();
         when(kataGoFactory.createKataGoProcess()).thenReturn(fakeKataGo);
         Executors.newSingleThreadExecutor().execute(() -> fakeKataGo.start());
         System.out.println(applicationConfig);
-        runKataGo = new RunKataGo(applicationConfig, moveMetricExtractor, analyseResultExporter, kataGoFactory);
+        runKataGo = new RunKataGo(applicationConfig, moveMetricExtractor, analyseInfoExporter, analyseResultExporter, kataGoFactory);
     }
 
     @AfterEach

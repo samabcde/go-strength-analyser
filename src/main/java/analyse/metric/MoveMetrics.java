@@ -1,4 +1,4 @@
-package analyse;
+package analyse.metric;
 
 import analyse.calculate.CalculateUtils;
 import lombok.Builder;

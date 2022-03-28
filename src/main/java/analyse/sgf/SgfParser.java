@@ -1,4 +1,4 @@
-package analyse;
+package analyse.sgf;
 
 import com.toomasr.sgf4j.Sgf;
 import com.toomasr.sgf4j.parser.Game;

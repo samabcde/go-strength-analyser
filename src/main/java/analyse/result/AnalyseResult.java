@@ -1,6 +1,8 @@
-package analyse;
+package analyse.result;
 
 import analyse.calculate.CalculateUtils;
+import analyse.core.AnalyseMetadata;
+import analyse.metric.MoveMetrics;
 import lombok.Builder;
 import lombok.Data;
 
@@ -11,6 +13,7 @@ import java.util.List;
 @Data
 @Builder
 public class AnalyseResult {
+    private final AnalyseMetadata metadata;
     private final String sgfName;
     private final List<MoveMetrics> moveMetricsList;
 

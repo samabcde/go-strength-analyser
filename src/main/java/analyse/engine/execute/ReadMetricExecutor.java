@@ -1,5 +1,7 @@
-package analyse;
+package analyse.engine.execute;
 
+import analyse.info.MoveInfo;
+import analyse.metric.MoveMetricExtractor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.BufferedReader;
@@ -10,29 +12,31 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @Slf4j
-public class CheckReadinessExecutor {
+public class ReadMetricExecutor {
     private final InputStream inputStream;
     private final AnalyseProcessState analyseProcessState;
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
+    private final MoveMetricExtractor moveMetricExtractor;
 
-    public CheckReadinessExecutor(InputStream inputStream, AnalyseProcessState analyseProcessState) {
+    public ReadMetricExecutor(InputStream inputStream, AnalyseProcessState analyseProcessState, MoveMetricExtractor moveMetricExtractor) {
         this.inputStream = inputStream;
         this.analyseProcessState = analyseProcessState;
+        this.moveMetricExtractor = moveMetricExtractor;
     }
 
-    void start() {
+    public void start() {
         executorService.execute(() -> {
             try (BufferedReader input = new BufferedReader(
                     new InputStreamReader(inputStream))) {
                 String line;
-
                 while ((line = input.readLine()) != null) {
-                    log.info(line);
-                    if (line.startsWith("NN eval")) {
-                        log.info("E " + line);
+                    log.debug(line);
+                    if (line.startsWith("info move")) {
+                        analyseProcessState.lastMoveInfo.set(new MoveInfo(analyseProcessState.currentAnalyseKey.get(), line));
                     }
-                    if (line.startsWith("GTP ready, beginning main protocol loop")) {
-                        analyseProcessState.isReady = true;
+                    if (line.equals("= 2")) {
+                        analyseProcessState.isCompleteAnalyze.set(true);
+                        log.debug("end current move analyse");
                     }
                 }
             } catch (IOException e) {
@@ -41,7 +45,7 @@ public class CheckReadinessExecutor {
         });
     }
 
-    void stop() {
+    public void stop() {
         executorService.shutdown();
     }
 }
