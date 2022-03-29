@@ -55,7 +55,7 @@ class RunKataGoTest {
 
     @Test
     public void runSuccess() {
-        runKataGo.run("-runTimeSec=1", "-sgfName=runKataGoTest");
+        runKataGo.run("kata_go", "-runTimeSec=1", "-sgfName=runKataGoTest");
         assertThat(Path.of(applicationConfig.getOutputFileFolder() + "/runKataGoTest.txt")).isNotEmptyFile();
     }
 

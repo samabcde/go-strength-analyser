@@ -40,7 +40,7 @@ class RunKataGoIntegrationTest {
 
     @Test
     public void runPro() {
-        runKataGo.run("-runTimeSec=1", "-sgfName=smj_ysc");
+        runKataGo.run("kata_go", "-runTimeSec=1", "-sgfName=smj_ysc");
         assertThat(Path.of(applicationConfig.getOutputFileFolder() + "/smj_ysc.txt")).isNotEmptyFile();
     }
 

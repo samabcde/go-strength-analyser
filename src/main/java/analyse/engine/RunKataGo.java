@@ -20,6 +20,7 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.nio.file.Path;
+import java.util.Arrays;
 
 @Component
 @Slf4j
@@ -69,9 +70,20 @@ public class RunKataGo implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+        String source = args[0];
+        AnalyseSource analyseSource = AnalyseSource.valueOf(source.toUpperCase());
+        switch (analyseSource) {
+            case INFO -> {
+            }
+            case KATA_GO -> analyseWithKataGo(Arrays.copyOfRange(args, 1, args.length));
+        }
+    }
+
+    private void analyseWithKataGo(String[] args) {
         log.info("Start Analyse");
         String sgfNameStr = "";
         String runTimeSecStr = "";
+
         for (String arg : args) {
             if (arg.startsWith("-sgfName=")) {
                 sgfNameStr = arg.replace("-sgfName=", "");
@@ -110,7 +122,7 @@ public class RunKataGo implements CommandLineRunner {
             checkReadinessExecutor.stop();
             runMoveExecutor.stop();
             kataGoProcess.destroy();
-            AnalyseMetadata metadata = AnalyseMetadata.builder().runTimeSec(runTimeSec).sgfName(sgfName).build();
+            AnalyseMetadata metadata = AnalyseMetadata.builder().runTimeSec(runTimeSec).sgfName(sgfName).sgf(game.getGeneratedSgf()).build();
             analyseInfoExporter.export(AnalyseInfo.builder().metadata(metadata).moveInfoList(analyseProcessState.moveInfoList).build());
             analyseResultExporter.export(AnalyseResult.builder().metadata(metadata)
                     .moveMetricsList(analyseProcessState.moveMetricsList).build());

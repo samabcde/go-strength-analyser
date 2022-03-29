@@ -12,7 +12,5 @@ public class AnalyseMetadata {
     @Getter
     private String sgf;
     @Getter
-    private String model;
-    @Getter
     private long runTimeSec;
 }
