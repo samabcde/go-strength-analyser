@@ -14,10 +14,24 @@ import java.util.List;
 @Builder
 public class AnalyseResult {
     private final AnalyseMetadata metadata;
-    private final String sgfName;
     private final List<MoveMetrics> moveMetricsList;
 
-    public BigDecimal getBlackStrengthScore() {
+    private final BigDecimal blackStrengthScore;
+    private final BigDecimal whiteStrengthScore;
+
+    // TODO add calculate module
+    private AnalyseResult(AnalyseMetadata metadata, List<MoveMetrics> moveMetricsList, BigDecimal blackStrengthScore, BigDecimal whiteStrengthScore) {
+        this.metadata = metadata;
+        this.moveMetricsList = moveMetricsList;
+        this.blackStrengthScore = calculateBlackStrengthScore();
+        this.whiteStrengthScore = calculateWhiteStrengthScore();
+    }
+
+    public String getSgfName() {
+        return metadata.getSgfName();
+    }
+
+    private BigDecimal calculateBlackStrengthScore() {
         BigDecimal winrateWeightSum = moveMetricsList.stream().filter(MoveMetrics::isBlack).map(MoveMetrics::getWinrateWeight).reduce(BigDecimal::add).get();
         BigDecimal winrateStrengthScore = moveMetricsList.stream().filter(MoveMetrics::isBlack).map(MoveMetrics::getWeightedWinrateStrengthScore).reduce(BigDecimal::add).get().divide(winrateWeightSum, MathContext.DECIMAL64);
 
@@ -26,7 +40,7 @@ public class AnalyseResult {
         return CalculateUtils.average(List.of(winrateStrengthScore, scoreLeadStrengthScore));
     }
 
-    public BigDecimal getWhiteStrengthScore() {
+    private BigDecimal calculateWhiteStrengthScore() {
         BigDecimal winrateWeightSum = moveMetricsList.stream().filter(MoveMetrics::isWhite).map(MoveMetrics::getWinrateWeight).reduce(BigDecimal::add).get();
         BigDecimal winrateStrengthScore = moveMetricsList.stream().filter(MoveMetrics::isWhite).map(MoveMetrics::getWeightedWinrateStrengthScore).reduce(BigDecimal::add).get().divide(winrateWeightSum, MathContext.DECIMAL64);
 
@@ -34,4 +48,5 @@ public class AnalyseResult {
         BigDecimal scoreLeadStrengthScore = moveMetricsList.stream().filter(MoveMetrics::isWhite).map(MoveMetrics::getWeightedScoreLeadStrengthScore).reduce(BigDecimal::add).get().divide(scoreLeadWeightSum, MathContext.DECIMAL64);
         return CalculateUtils.average(List.of(winrateStrengthScore, scoreLeadStrengthScore));
     }
+
 }

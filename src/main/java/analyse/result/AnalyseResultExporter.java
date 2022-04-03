@@ -1,9 +1,9 @@
 package analyse.result;
 
 import analyse.core.ApplicationConfig;
-import analyse.info.MoveInfo;
 import analyse.metric.MoveMetrics;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -28,7 +28,7 @@ public class AnalyseResultExporter {
 
     public void export(AnalyseResult analyseResult) {
         exportToText(analyseResult);
-        exportRawToJson(analyseResult);
+        exportToJson(analyseResult);
     }
 
     private void exportToText(AnalyseResult analyseResult) {
@@ -72,12 +72,12 @@ public class AnalyseResultExporter {
         }
     }
 
-    private void exportRawToJson(AnalyseResult analyseResult) {
+    private void exportToJson(AnalyseResult analyseResult) {
         String outputFilePath = applicationConfig.getOutputFileFolder() + analyseResult.getSgfName() + ".json";
         ObjectMapper objectMapper = new ObjectMapper();
-        List<MoveInfo> rawInfos = new ArrayList<>();
+        objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
         try (FileWriter fileWriter = new FileWriter(outputFilePath)) {
-            objectMapper.writeValue(fileWriter, rawInfos);
+            objectMapper.writeValue(fileWriter, analyseResult);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
