@@ -16,6 +16,7 @@ public class ApplicationConfig {
     private Resource weightPath;
     private Resource configFilePath;
     private Resource outputFileFolder;
+    private Resource analyseInfoFolder;
 
     public void setKataGoPath(Resource kataGoPath) {
         this.kataGoPath = kataGoPath;
@@ -35,6 +36,10 @@ public class ApplicationConfig {
 
     public void setOutputFileFolder(Resource outputFileFolder) {
         this.outputFileFolder = outputFileFolder;
+    }
+
+    public void setAnalyseInfoFolder(Resource analyseInfoFolder) {
+        this.analyseInfoFolder = analyseInfoFolder;
     }
 
     public String getKataGoPath() {
@@ -80,6 +85,14 @@ public class ApplicationConfig {
     public String getOutputFileFolder() {
         try {
             return outputFileFolder.getFile().getAbsolutePath() + File.separator;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public String getAnalyseInfoFolder() {
+        try {
+            return analyseInfoFolder.getFile().getAbsolutePath() + File.separator;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

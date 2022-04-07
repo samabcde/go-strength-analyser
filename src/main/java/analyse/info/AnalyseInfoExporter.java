@@ -18,7 +18,7 @@ public class AnalyseInfoExporter {
     }
 
     public void export(AnalyseInfo analyseInfo) {
-        String outputFilePath = applicationConfig.getOutputFileFolder() + analyseInfo.getSgfName() + ".json";
+        String outputFilePath = applicationConfig.getAnalyseInfoFolder() + analyseInfo.getSgfName() + ".json";
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
         try (FileWriter fileWriter = new FileWriter(outputFilePath)) {

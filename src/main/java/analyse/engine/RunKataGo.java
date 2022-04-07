@@ -98,37 +98,39 @@ public class RunKataGo implements CommandLineRunner {
             throw new IllegalArgumentException("No sgf name");
         }
         final Integer runTimeSec = Integer.valueOf(runTimeSecStr);
-        final String sgfName = sgfNameStr;
-        Game game = SgfParser.parseGame(getSgfPath(sgfName));
-        if (game.getProperty("KM") == null) {
-            throw new IllegalArgumentException("no komi");
-        }
-        if (game.getProperty("RU") == null) {
-            throw new IllegalArgumentException("no rule");
-        }
-        AnalyseProcessState analyseProcessState = new AnalyseProcessState();
-        try {
-            Process kataGoProcess = kataGoFactory.createKataGoProcess();
-            ReadMetricExecutor readWinrateExecutor = new ReadMetricExecutor(kataGoProcess.getInputStream(), analyseProcessState, moveMetricExtractor);
-            readWinrateExecutor.start();
-            CheckReadinessExecutor checkReadinessExecutor = new CheckReadinessExecutor(kataGoProcess.getErrorStream(), analyseProcessState);
-            checkReadinessExecutor.start();
-            RunMoveExecutor runMoveExecutor = new RunMoveExecutor(kataGoProcess.getOutputStream(), game, analyseProcessState, runTimeSec, moveMetricExtractor);
-            runMoveExecutor.start();
-            while (!analyseProcessState.isEnd) {
-                Thread.sleep(50);
+        String[] sgfNames = sgfNameStr.split(",");
+        for (String sgfName : sgfNames) {
+            Game game = SgfParser.parseGame(getSgfPath(sgfName));
+            if (game.getProperty("KM") == null) {
+                throw new IllegalArgumentException("no komi");
             }
-            readWinrateExecutor.stop();
-            checkReadinessExecutor.stop();
-            runMoveExecutor.stop();
-            kataGoProcess.destroy();
-            AnalyseMetadata metadata = AnalyseMetadata.builder().runTimeSec(runTimeSec).sgfName(sgfName).sgf(game.getGeneratedSgf()).build();
-            analyseInfoExporter.export(AnalyseInfo.builder().metadata(metadata).moveInfoList(analyseProcessState.moveInfoList).build());
-            analyseResultExporter.export(AnalyseResult.builder().metadata(metadata)
-                    .moveMetricsList(analyseProcessState.moveMetricsList).build());
-            log.debug("all metrics: {}", analyseProcessState.moveMetricsList);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+            if (game.getProperty("RU") == null) {
+                throw new IllegalArgumentException("no rule");
+            }
+            AnalyseProcessState analyseProcessState = new AnalyseProcessState();
+            try {
+                Process kataGoProcess = kataGoFactory.createKataGoProcess();
+                ReadMetricExecutor readWinrateExecutor = new ReadMetricExecutor(kataGoProcess.getInputStream(), analyseProcessState, moveMetricExtractor);
+                readWinrateExecutor.start();
+                CheckReadinessExecutor checkReadinessExecutor = new CheckReadinessExecutor(kataGoProcess.getErrorStream(), analyseProcessState);
+                checkReadinessExecutor.start();
+                RunMoveExecutor runMoveExecutor = new RunMoveExecutor(kataGoProcess.getOutputStream(), game, analyseProcessState, runTimeSec, moveMetricExtractor);
+                runMoveExecutor.start();
+                while (!analyseProcessState.isEnd) {
+                    Thread.sleep(50);
+                }
+                readWinrateExecutor.stop();
+                checkReadinessExecutor.stop();
+                runMoveExecutor.stop();
+                kataGoProcess.destroy();
+                AnalyseMetadata metadata = AnalyseMetadata.builder().runTimeSec(runTimeSec).sgfName(sgfName).sgf(game.getGeneratedSgf()).build();
+                analyseInfoExporter.export(AnalyseInfo.builder().metadata(metadata).moveInfoList(analyseProcessState.moveInfoList).build());
+                analyseResultExporter.export(AnalyseResult.builder().metadata(metadata)
+                        .moveMetricsList(analyseProcessState.moveMetricsList).build());
+                log.debug("all metrics: {}", analyseProcessState.moveMetricsList);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 

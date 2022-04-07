@@ -9,7 +9,7 @@ import java.util.regex.Pattern;
 
 @Component
 public class MoveMetricExtractor {
-    private static final Pattern metricsPattern = Pattern.compile("move ([A-Z0-9]+) visits ([0-9]+) utility ([e0-9-.]+) winrate ([e0-9-.]+) scoreMean ([e0-9-.]+) scoreStdev ([e0-9-.]+) scoreLead ([e0-9-.]+) scoreSelfplay ([e0-9-.]+) prior ([e0-9-.]+) lcb ([e0-9-.]+) utilityLcb ([e0-9-.]+) order ([0-9]) pv ([a-zA-Z 0-9]+)");
+    private static final Pattern metricsPattern = Pattern.compile("move ([a-zA-Z0-9]+) visits ([0-9]+) utility ([e0-9-.]+) winrate ([e0-9-.]+) scoreMean ([e0-9-.]+) scoreStdev ([e0-9-.]+) scoreLead ([e0-9-.]+) scoreSelfplay ([e0-9-.]+) prior ([e0-9-.]+) lcb ([e0-9-.]+) utilityLcb ([e0-9-.]+) order ([0-9]) pv ([a-zA-Z 0-9]+)");
 
     public MoveMetric extractMoveMetric(MoveInfo moveInfo) {
         String raw = moveInfo.info();
