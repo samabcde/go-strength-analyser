@@ -16,37 +16,31 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 
 @Slf4j
-public class RunMoveExecutor {
+public class RunMoveExecutor extends AbstractExecutor {
     private final OutputStream outputStream;
-    private final AnalyseProcessState analyseProcessState;
-    private final ExecutorService executorService = Executors.newSingleThreadExecutor();
     private final MoveMetricExtractor moveMetricExtractor;
     private final Integer runTimeSec;
     private final Game game;
 
-    public RunMoveExecutor(OutputStream outputStream, Game game, AnalyseProcessState analyseProcessState, Integer runTimeSec, MoveMetricExtractor moveMetricExtractor) {
+    public RunMoveExecutor(OutputStream outputStream, Game game, AnalyseProcessState analyseProcessState, Integer runTimeSec, MoveMetricExtractor moveMetricExtractor, ThreadFactory threadFactory) {
+        super(analyseProcessState, threadFactory);
         this.outputStream = outputStream;
         this.game = game;
-        this.analyseProcessState = analyseProcessState;
         this.runTimeSec = runTimeSec;
         this.moveMetricExtractor = moveMetricExtractor;
     }
 
-    public void start() {
-        final String komi = game.getProperty("KM");
-        final String rule = game.getProperty("RU");
-        final Integer noOfMove = game.getNoMoves();
-        executorService.execute(() -> {
+    @Override
+    protected Runnable task() {
+        return () -> {
+            final String komi = game.getProperty("KM");
+            final String rule = game.getProperty("RU");
+            final Integer noOfMove = game.getNoMoves();
             while (!analyseProcessState.isReady) {
-                try {
-                    Thread.sleep(50);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                sleep(50);
             }
             try (BufferedWriter output = new BufferedWriter(
                     new OutputStreamWriter(outputStream))) {
@@ -75,7 +69,7 @@ public class RunMoveExecutor {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-        });
+        };
     }
 
     private MoveMetric analyzeMove(BufferedWriter output, String moveCommand, int noOfMove, AnalyseKey analyseKey) throws IOException {
@@ -117,15 +111,4 @@ public class RunMoveExecutor {
         return moveMetricExtractor.extractMoveMetric(moveInfo);
     }
 
-    public void stop() {
-        executorService.shutdown();
-    }
-
-    private static void sleep(long milisec) {
-        try {
-            Thread.sleep(milisec);
-        } catch (InterruptedException ex) {
-            throw new RuntimeException(ex);
-        }
-    }
 }

@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class AnalyseProcessState {
     public volatile boolean isEnd = false;
+    public volatile boolean isErrorOccur = false;
     volatile boolean isReady = false;
     //    volatile int currentMoveNo = 0;
     volatile AtomicReference<AnalyseKey> currentAnalyseKey = new AtomicReference<>(null);

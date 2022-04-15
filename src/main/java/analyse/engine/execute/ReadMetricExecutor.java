@@ -8,24 +8,22 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 
 @Slf4j
-public class ReadMetricExecutor {
+public class ReadMetricExecutor extends AbstractExecutor {
     private final InputStream inputStream;
-    private final AnalyseProcessState analyseProcessState;
-    private final ExecutorService executorService = Executors.newSingleThreadExecutor();
     private final MoveMetricExtractor moveMetricExtractor;
 
-    public ReadMetricExecutor(InputStream inputStream, AnalyseProcessState analyseProcessState, MoveMetricExtractor moveMetricExtractor) {
+    public ReadMetricExecutor(InputStream inputStream, AnalyseProcessState analyseProcessState, MoveMetricExtractor moveMetricExtractor, ThreadFactory threadFactory) {
+        super(analyseProcessState, threadFactory);
         this.inputStream = inputStream;
-        this.analyseProcessState = analyseProcessState;
         this.moveMetricExtractor = moveMetricExtractor;
     }
 
-    public void start() {
-        executorService.execute(() -> {
+    @Override
+    protected Runnable task() {
+        return () -> {
             try (BufferedReader input = new BufferedReader(
                     new InputStreamReader(inputStream))) {
                 String line;
@@ -42,10 +40,7 @@ public class ReadMetricExecutor {
             } catch (IOException e) {
                 log.error("Read kata ready input error", e);
             }
-        });
+        };
     }
 
-    public void stop() {
-        executorService.shutdown();
-    }
 }

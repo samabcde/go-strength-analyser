@@ -15,7 +15,8 @@ public class KataGoFactory {
     }
 
     public Process createKataGoProcess() {
-        ProcessBuilder processBuilder = new ProcessBuilder(applicationConfig.getKataGoPath(), "gtp", "-config", applicationConfig.getConfigFilePath(),
+        ProcessBuilder processBuilder = new ProcessBuilder(applicationConfig.getKataGoPath(), "gtp",
+                "-config", applicationConfig.getConfigFilePath(),
                 "-model", applicationConfig.getWeightPath(),
                 "-override-config", "reportAnalysisWinratesAs=" + reportAnalysisWinratesAs);
         try {

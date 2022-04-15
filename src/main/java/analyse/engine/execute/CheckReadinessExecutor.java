@@ -6,22 +6,20 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 
 @Slf4j
-public class CheckReadinessExecutor {
+public class CheckReadinessExecutor extends AbstractExecutor {
     private final InputStream inputStream;
-    private final AnalyseProcessState analyseProcessState;
-    private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
-    public CheckReadinessExecutor(InputStream inputStream, AnalyseProcessState analyseProcessState) {
+    public CheckReadinessExecutor(InputStream inputStream, AnalyseProcessState analyseProcessState, ThreadFactory threadFactory) {
+        super(analyseProcessState, threadFactory);
         this.inputStream = inputStream;
-        this.analyseProcessState = analyseProcessState;
     }
 
-    public void start() {
-        executorService.execute(() -> {
+    @Override
+    protected Runnable task() {
+        return () -> {
             try (BufferedReader input = new BufferedReader(
                     new InputStreamReader(inputStream))) {
                 String line;
@@ -38,10 +36,7 @@ public class CheckReadinessExecutor {
             } catch (IOException e) {
                 log.error("Read kata ready input error", e);
             }
-        });
+        };
     }
 
-    public void stop() {
-        executorService.shutdown();
-    }
 }

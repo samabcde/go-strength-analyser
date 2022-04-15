@@ -2,10 +2,7 @@ package analyse.engine;
 
 import analyse.core.AnalyseMetadata;
 import analyse.core.ApplicationConfig;
-import analyse.engine.execute.AnalyseProcessState;
-import analyse.engine.execute.CheckReadinessExecutor;
-import analyse.engine.execute.ReadMetricExecutor;
-import analyse.engine.execute.RunMoveExecutor;
+import analyse.engine.execute.*;
 import analyse.info.AnalyseInfo;
 import analyse.info.AnalyseInfoExporter;
 import analyse.metric.MoveMetricExtractor;
@@ -108,25 +105,29 @@ public class RunKataGo implements CommandLineRunner {
                 throw new IllegalArgumentException("no rule");
             }
             AnalyseProcessState analyseProcessState = new AnalyseProcessState();
+            ExecutorExceptionHandler exceptionHandler = new ExecutorExceptionHandler(analyseProcessState);
+            ExecutorThreadFactory executorThreadFactory = new ExecutorThreadFactory(exceptionHandler);
             try {
                 Process kataGoProcess = kataGoFactory.createKataGoProcess();
-                ReadMetricExecutor readWinrateExecutor = new ReadMetricExecutor(kataGoProcess.getInputStream(), analyseProcessState, moveMetricExtractor);
+                ReadMetricExecutor readWinrateExecutor = new ReadMetricExecutor(kataGoProcess.getInputStream(), analyseProcessState, moveMetricExtractor, executorThreadFactory);
                 readWinrateExecutor.start();
-                CheckReadinessExecutor checkReadinessExecutor = new CheckReadinessExecutor(kataGoProcess.getErrorStream(), analyseProcessState);
+                CheckReadinessExecutor checkReadinessExecutor = new CheckReadinessExecutor(kataGoProcess.getErrorStream(), analyseProcessState, executorThreadFactory);
                 checkReadinessExecutor.start();
-                RunMoveExecutor runMoveExecutor = new RunMoveExecutor(kataGoProcess.getOutputStream(), game, analyseProcessState, runTimeSec, moveMetricExtractor);
+                RunMoveExecutor runMoveExecutor = new RunMoveExecutor(kataGoProcess.getOutputStream(), game, analyseProcessState, runTimeSec, moveMetricExtractor, executorThreadFactory);
                 runMoveExecutor.start();
-                while (!analyseProcessState.isEnd) {
+                while (!(analyseProcessState.isEnd || analyseProcessState.isErrorOccur)) {
                     Thread.sleep(50);
+                }
+                if (analyseProcessState.isEnd) {
+                    AnalyseMetadata metadata = AnalyseMetadata.builder().runTimeSec(runTimeSec).sgfName(sgfName).sgf(game.getGeneratedSgf()).build();
+                    analyseInfoExporter.export(AnalyseInfo.builder().metadata(metadata).moveInfoList(analyseProcessState.moveInfoList).build());
+                    analyseResultExporter.export(AnalyseResult.builder().metadata(metadata)
+                            .moveMetricsList(analyseProcessState.moveMetricsList).build());
                 }
                 readWinrateExecutor.stop();
                 checkReadinessExecutor.stop();
                 runMoveExecutor.stop();
                 kataGoProcess.destroy();
-                AnalyseMetadata metadata = AnalyseMetadata.builder().runTimeSec(runTimeSec).sgfName(sgfName).sgf(game.getGeneratedSgf()).build();
-                analyseInfoExporter.export(AnalyseInfo.builder().metadata(metadata).moveInfoList(analyseProcessState.moveInfoList).build());
-                analyseResultExporter.export(AnalyseResult.builder().metadata(metadata)
-                        .moveMetricsList(analyseProcessState.moveMetricsList).build());
                 log.debug("all metrics: {}", analyseProcessState.moveMetricsList);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
