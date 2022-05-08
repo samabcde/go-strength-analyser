@@ -192,37 +192,37 @@ public class RunKataGo implements CommandLineRunner {
                 readWinrateExecutor.start();
                 CheckReadinessExecutor checkReadinessExecutor = new CheckReadinessExecutor(kataGoProcess.getErrorStream(), analyseProcessState, executorThreadFactory);
                 checkReadinessExecutor.start();
-                RunMoveExecutor runMoveExecutor = new RunMoveExecutor(kataGoProcess.getOutputStream(), game, analyseProcessState, runTimeSec, moveMetricExtractor, executorThreadFactory, null);
-                runMoveExecutor.start();
-                while (!(analyseProcessState.isEnd || analyseProcessState.isErrorOccur)) {
-                    Thread.sleep(50);
+                    RunMoveExecutor runMoveExecutor = new RunMoveExecutor(kataGoProcess.getOutputStream(), game, analyseProcessState, runTimeSec, moveMetricExtractor, executorThreadFactory, moveMetricsScoreCalculator);
+                    runMoveExecutor.start();
+                    while (!(analyseProcessState.isEnd || analyseProcessState.isErrorOccur)) {
+                        Thread.sleep(50);
+                    }
+                    if (analyseProcessState.isEnd) {
+                        AnalyseMetadata metadata = AnalyseMetadata.builder().runTimeSec(runTimeSec).sgfName(sgfName).sgf(game.getGeneratedSgf()).build();
+                        analyseInfoExporter.export(AnalyseInfo.builder().metadata(metadata).moveInfoList(analyseProcessState.moveInfoList).build());
+                        analyseResultExporter.export(AnalyseResult.builder().metadata(metadata)
+                                .moveMetricsList(analyseProcessState.moveMetricsList).build());
+                    }
+                    readWinrateExecutor.stop();
+                    checkReadinessExecutor.stop();
+                    runMoveExecutor.stop();
+                    kataGoProcess.destroy();
+                    log.debug("all metrics: {}", analyseProcessState.moveMetricsList);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
                 }
-                if (analyseProcessState.isEnd) {
-                    AnalyseMetadata metadata = AnalyseMetadata.builder().runTimeSec(runTimeSec).sgfName(sgfName).sgf(game.getGeneratedSgf()).build();
-                    analyseInfoExporter.export(AnalyseInfo.builder().metadata(metadata).moveInfoList(analyseProcessState.moveInfoList).build());
-                    analyseResultExporter.export(AnalyseResult.builder().metadata(metadata)
-                            .moveMetricsList(analyseProcessState.moveMetricsList).build());
-                }
-                readWinrateExecutor.stop();
-                checkReadinessExecutor.stop();
-                runMoveExecutor.stop();
-                kataGoProcess.destroy();
-                log.debug("all metrics: {}", analyseProcessState.moveMetricsList);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
             }
         }
-    }
 
-    private Path getSgfPath(final String sgfName) {
-        return applicationConfig.getSgfFolderPath().resolve(sgfName + ".sgf");
-    }
+        private Path getSgfPath(final String sgfName) {
+            return applicationConfig.getSgfFolderPath().resolve(sgfName + ".sgf");
+        }
 
-    private Path getAnalyseInfoPath(String analyseInfoName) {
-        return applicationConfig.getAnalyseInfoFolderPath().resolve(analyseInfoName + ".json");
-    }
+        private Path getAnalyseInfoPath(String analyseInfoName) {
+            return applicationConfig.getAnalyseInfoFolderPath().resolve(analyseInfoName + ".json");
+        }
 
-    private List<Path> getAnalyseInfoPaths() {
+        private List<Path> getAnalyseInfoPaths() {
         try {
             return Files.list(applicationConfig.getAnalyseInfoFolderPath()).filter(p -> p.getFileName().toString().endsWith(".json")).toList();
         } catch (IOException e) {
