@@ -1,10 +1,7 @@
 package analyse.metric;
 
 import analyse.calculate.CalculateUtils;
-import lombok.Builder;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.ToString;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
@@ -14,11 +11,23 @@ import java.util.List;
 @Builder
 @EqualsAndHashCode
 public class MoveMetrics {
+    @Getter
     private MoveMetric ai;
+    @Getter
     private MoveMetric pass;
+    @Getter
     private MoveMetric candidate;
     @Getter
     private final Integer moveNo;
+
+    @Getter @Setter
+    private BigDecimal strengthScore;
+
+    @Getter @Setter
+    private BigDecimal winrateStrengthScore;
+
+    @Getter @Setter
+    private BigDecimal scoreLeadStrengthScore;
 
     public BigDecimal getBlackWinrate() {
         return this.candidate.getBlackWinrate();
@@ -33,23 +42,11 @@ public class MoveMetrics {
     }
 
     public BigDecimal getRateChange() {
-        return this.candidate.getBlackWinrate().subtract(this.ai.getBlackWinrate());
-    }
-
-    public BigDecimal getStrengthScore() {
-        return CalculateUtils.average(List.of(getWinrateStrengthScore(), getScoreLeadStrengthScore())).multiply(BigDecimal.valueOf(10000));
-    }
-
-    public BigDecimal getWinrateStrengthScore() {
-        return calculateStrengthScore(candidate.getRespectiveWinrate(), pass.getRespectiveWinrate(), ai.getRespectiveWinrate());
+        return this.candidate.getRespectiveWinrate().subtract(this.ai.getRespectiveWinrate());
     }
 
     public BigDecimal getWeightedWinrateStrengthScore() {
         return getWinrateStrengthScore().multiply(getWinrateWeight(), MathContext.DECIMAL64);
-    }
-
-    public BigDecimal getScoreLeadStrengthScore() {
-        return calculateStrengthScore(candidate.getRespectiveScoreLead(), pass.getRespectiveScoreLead(), ai.getRespectiveScoreLead());
     }
 
     public BigDecimal getWeightedScoreLeadStrengthScore() {
@@ -68,36 +65,6 @@ public class MoveMetrics {
             return BigDecimal.ZERO;
         }
         return ai.getRespectiveScoreLead().subtract(pass.getRespectiveScoreLead());
-    }
-
-//    // y = (x - x1)/(x2 - x1)
-//    private BigDecimal calculateStrengthScore(BigDecimal x, BigDecimal x1, BigDecimal x2) {
-//        if (x1.compareTo(x2) >= 0) {
-//            return BigDecimal.ONE;
-//        }
-//        if (x.compareTo(x2) > 0) {
-//            x = x2;
-//        }
-//        if (x.compareTo(x1) < 0) {
-//            x = x1;
-//        }
-//        BigDecimal y = (x.subtract(x1)).divide(x2.subtract(x1), MathContext.DECIMAL64);
-//        return y;
-//    }
-
-    // y = (2x - x1 - x2)/(x2 - x1)
-    private BigDecimal calculateStrengthScore(BigDecimal x, BigDecimal x1, BigDecimal x2) {
-        if (x1.compareTo(x2) >= 0) {
-            return BigDecimal.ONE;
-        }
-        if (x.compareTo(x2) > 0) {
-            x = x2;
-        }
-        if (x.compareTo(x1) < 0) {
-            x = x1;
-        }
-        BigDecimal y = (x.multiply(BigDecimal.valueOf(2)).subtract(x1).subtract(x2)).divide(x2.subtract(x1), MathContext.DECIMAL64);
-        return y;
     }
 
     public String details() {

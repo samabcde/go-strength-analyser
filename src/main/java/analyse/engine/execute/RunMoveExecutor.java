@@ -6,6 +6,7 @@ import analyse.engine.RunKataGo;
 import analyse.info.MoveInfo;
 import analyse.metric.MoveMetric;
 import analyse.metric.MoveMetricExtractor;
+import analyse.metric.MoveMetricsScoreCalculator;
 import analyse.metric.MoveMetrics;
 import analyse.sgf.SgfParser;
 import com.toomasr.sgf4j.parser.Game;
@@ -22,15 +23,17 @@ import java.util.concurrent.ThreadFactory;
 public class RunMoveExecutor extends AbstractExecutor {
     private final OutputStream outputStream;
     private final MoveMetricExtractor moveMetricExtractor;
+    private final MoveMetricsScoreCalculator moveMetricsScoreCalculator;
     private final Integer runTimeSec;
     private final Game game;
 
-    public RunMoveExecutor(OutputStream outputStream, Game game, AnalyseProcessState analyseProcessState, Integer runTimeSec, MoveMetricExtractor moveMetricExtractor, ThreadFactory threadFactory) {
+    public RunMoveExecutor(OutputStream outputStream, Game game, AnalyseProcessState analyseProcessState, Integer runTimeSec, MoveMetricExtractor moveMetricExtractor, ThreadFactory threadFactory, MoveMetricsScoreCalculator moveMetricsScoreCalculator) {
         super(analyseProcessState, threadFactory);
         this.outputStream = outputStream;
         this.game = game;
         this.runTimeSec = runTimeSec;
         this.moveMetricExtractor = moveMetricExtractor;
+        this.moveMetricsScoreCalculator = moveMetricsScoreCalculator;
     }
 
     @Override
@@ -59,7 +62,7 @@ public class RunMoveExecutor extends AbstractExecutor {
                     MoveMetric ai = analyzeMove(output, moveCommand.split(" ")[0] + " " + aiMove, noOfMove, new AnalyseKey(AnalyseTarget.AI, moveNo, aiMove));
                     aiMove = candidate.getBestMove();
                     MoveMetric pass = analyzeMove(output, moveCommand.split(" ")[0] + " " + "pass", noOfMove, new AnalyseKey(AnalyseTarget.PASS, moveNo, "pass"));
-                    analyseProcessState.moveMetricsList.add(MoveMetrics.builder().moveNo(moveNo).ai(ai).candidate(candidate).pass(pass).build());
+                    analyseProcessState.moveMetricsList.add(moveMetricsScoreCalculator.calculateScore(MoveMetrics.builder().moveNo(moveNo).ai(ai).candidate(candidate).pass(pass).build()));
                     output.append("play " + moveCommand);
                     output.newLine();
                     output.flush();

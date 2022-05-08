@@ -4,6 +4,7 @@ import analyse.core.ApplicationConfig;
 import analyse.engine.KataGoFactory;
 import analyse.engine.RunKataGo;
 import analyse.info.AnalyseInfoExporter;
+import analyse.info.AnalyseInfoImporter;
 import analyse.metric.MoveMetricExtractor;
 import analyse.result.AnalyseResultExporter;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,9 +34,10 @@ class RunKataGoIntegrationTest {
     void setup() {
         MoveMetricExtractor moveMetricExtractor = new MoveMetricExtractor();
         AnalyseInfoExporter analyseInfoExporter = new AnalyseInfoExporter(applicationConfig);
+        AnalyseInfoImporter analyseInfoImporter = new AnalyseInfoImporter();
         AnalyseResultExporter analyseResultExporter = new AnalyseResultExporter(applicationConfig);
         KataGoFactory kataGoFactory = new KataGoFactory(applicationConfig);
-        runKataGo = new RunKataGo(applicationConfig, moveMetricExtractor, analyseInfoExporter, analyseResultExporter, kataGoFactory);
+        runKataGo = new RunKataGo(applicationConfig, moveMetricExtractor, analyseInfoExporter, analyseInfoImporter, analyseResultExporter, kataGoFactory, null);
     }
 
     @Test

@@ -1,0 +1,33 @@
+{
+  "properties": [
+    {
+      "name": "path.sgfFolder",
+      "type": "java.lang.String",
+      "description": "Description for path.sgfFolder."
+    },
+    {
+      "name": "path.kataGoPath",
+      "type": "java.lang.String",
+      "description": "Description for path.kataGoPath."
+    },
+    {
+      "name": "path.weightPath",
+      "type": "java.lang.String",
+      "description": "Description for path.weightPath."
+    },
+    {
+      "name": "path.configFilePath",
+      "type": "java.lang.String",
+      "description": "Description for path.configFilePath."
+    },
+    {
+      "name": "path.outputFileFolder",
+      "type": "java.lang.String",
+      "description": "Description for path.outputFileFolder."
+    },
+    {
+      "name": "path.analyseInfoFolder",
+      "type": "java.lang.String",
+      "description": "Description for path.analyseInfoFolder."
+    }
+  ] }

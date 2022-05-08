@@ -19,15 +19,14 @@ public class MoveMetricExtractor {
         }
         String info = infos[1];
         Matcher matcher = metricsPattern.matcher(info);
-        if (matcher.matches()) {
-            return MoveMetric.builder()
-                    .analyseKey(moveInfo.analyseKey())
-                    .bestMove(matcher.group(1))
-                    .winrate(new BigDecimal(matcher.group(4)))
-                    .scoreLead(new BigDecimal(matcher.group(7)))
-                    .build();
-        } else {
+        if (!matcher.matches()) {
             throw new IllegalArgumentException("Can't match pattern with info:" + info);
         }
+        return MoveMetric.builder()
+                .analyseKey(moveInfo.analyseKey())
+                .bestMove(matcher.group(1))
+                .winrate(new BigDecimal(matcher.group(4)))
+                .scoreLead(new BigDecimal(matcher.group(7)))
+                .build();
     }
 }

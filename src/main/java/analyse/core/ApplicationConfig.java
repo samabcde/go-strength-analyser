@@ -97,4 +97,11 @@ public class ApplicationConfig {
             throw new RuntimeException(e);
         }
     }
+    public Path getAnalyseInfoFolderPath() {
+        try {
+            return analyseInfoFolder.getFile().toPath();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

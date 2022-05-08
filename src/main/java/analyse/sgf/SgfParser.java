@@ -32,6 +32,9 @@ public class SgfParser {
         return Sgf.createFromPath(sgfPath);
     }
 
+    public static Game parseGame(String sgfString) {
+        return Sgf.createFromString(sgfString);
+    }
     public static List<String> toMoveCommands(Game game) {
         List<String> moveCommands = new ArrayList<>();
         GameNode node = game.getFirstMove();
