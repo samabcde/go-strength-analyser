@@ -84,22 +84,3 @@ game score = avg(game winrate score, game score lead score) * 10000
 | 7D   | 8594.31  | 7730.12  | 9832.28  | 885.41  | 4     |
 | 9P   | 9102.16  | 8187.41  | 9757.60  | 403.39  | 19    |
 | NR   | 9578.71  | 9578.71  | 9578.71  | 0.00    | 1     |
-
-```vega-lite
-{
-  "$schema": "https://vega.github.io/schema/vega-lite/v2.json",
-  "description": "test bar chart",
-  "data": {
-    "values": [
-      {"a": "A", "b": 28}, {"a": "B", "b": 55}, {"a": "C", "b": 43},
-      {"a": "D", "b": 91}, {"a": "E", "b": 81}, {"a": "F", "b": 53},
-      {"a": "G", "b": 19}, {"a": "H", "b": 87}, {"a": "I", "b": 52}
-    ]
-  },
-  "mark": "bar",
-  "encoding": {
-    "x": {"field": "a", "type": "nominal", "axis": {"labelAngle": 0}},
-    "y": {"field": "b", "type": "quantitative"}
-  }
-}
-```
