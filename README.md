@@ -19,11 +19,11 @@ Basic idea is to measure where the move is located between best move and worst m
 
 ### Move Score
 
-For a $metric$, we use values candidate move: $m_{candidate}$, ai move: $m_{ai}$ and pass move: $m_{pass}$.
+For a $metric$, we use values candidate move: $metric_{candidate}$, ai move: $metric_{ai}$ and pass move: $metric_{pass}$.
 The formula of metric $score_m$ is:   
-$$ moveScore_m = {2metric_{candidate} - metric_{pass} - metric_{ai} \over metric_{ai} - metric_{pass}} $$
+$$ moveScore_{metric} = {2metric_{candidate} - metric_{pass} - metric_{ai} \over metric_{ai} - metric_{pass}} $$
 
-Which is a linear model. i.e. If the move is best, the score will be 1. If the move is worst, the score will be -1. If
+Which is a linear model. i.e. If the move is best(ai), the score will be 1. If the move is worst(pass), the score will be -1. If
 the move is in middle of best and worst, the score will be 0.
 
 2 metrics are used to calculate the score _winrate_ and _scorelead_.
@@ -33,7 +33,7 @@ So we have 2 scores for each move, winrate score and score lead score.
 
 Black player and White player will have their own Game Score, using their move scores
 
-$$ gameScore_m = {\sum(moveScore_m * weight) / \sum(weight)}$$
+$$ gameScore_{metric} = {\sum(moveScore_{metric} * weight) / \sum(weight)}$$
 
 where $weight = metric_{ai} - metric_{pass}$
 
@@ -99,15 +99,13 @@ Games and analyse info are coming from [go-strength-analyse-sgf](https://github.
 3. set properties in project folder `config/application-dev.properties`
 
 ### Build
-In project folder  
-Run 
+In project folder, run 
 ```shell
 ./gradlew build
 ```
 
 ### Analyse sgf
-In project folder
-Run 
+In project folder, run 
 ```shell
 ./gradlew bootRun --args='kata_go -sgfName="{name of your sgf}" -runTimeSec={time you want to run} --spring.profiles.active=dev'
 ```
