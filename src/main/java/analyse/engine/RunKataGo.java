@@ -13,6 +13,7 @@ import analyse.metric.MoveMetrics;
 import analyse.metric.MoveMetricsScoreCalculator;
 import analyse.result.AnalyseResult;
 import analyse.result.AnalyseResultExporter;
+import analyse.result.graph.GraphExporter;
 import analyse.sgf.Rank;
 import analyse.sgf.SgfParser;
 import analyse.statistic.BigDecimalSummaryStatistics;
@@ -23,7 +24,7 @@ import org.springframework.core.io.PathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
+import java.io.*;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.nio.file.Files;
@@ -118,10 +119,12 @@ public class RunKataGo implements CommandLineRunner {
                     .map((entry) ->
                             {
                                 Map<AnalyseTarget, MoveMetric> analyseTargetToMoveMetricMap = entry.getValue().stream().collect(Collectors.toMap(moveMetric -> moveMetric.getAnalyseKey().analyseTarget(), Function.identity()));
-                                return moveMetricsScoreCalculator.calculateScore(MoveMetrics.builder().moveNo(entry.getKey())
+                                MoveMetrics moveMetrics = MoveMetrics.builder().moveNo(entry.getKey())
                                         .ai(analyseTargetToMoveMetricMap.get(AnalyseTarget.AI))
                                         .candidate(analyseTargetToMoveMetricMap.get(AnalyseTarget.CANDIDATE))
-                                        .pass(analyseTargetToMoveMetricMap.get(AnalyseTarget.PASS)).build());
+                                        .pass(analyseTargetToMoveMetricMap.get(AnalyseTarget.PASS)).build();
+                                moveMetrics.setMoveScore(moveMetricsScoreCalculator.calculateMoveScore(moveMetrics));
+                                return moveMetrics;
                             }
                     ).toList();
             AnalyseResult analyseResult = AnalyseResult.builder().metadata(analyseInfo.getMetadata())
@@ -130,12 +133,12 @@ public class RunKataGo implements CommandLineRunner {
             analyseResults.add(analyseResult);
         }
         Map<Rank, BigDecimalSummaryStatistics> rankToStatistic = new TreeMap<>();
-        Map<Rank, List<BigDecimal>> rankToGSSList = new TreeMap<>();
+        Map<Rank, List<BigDecimal>> rankToGssList = new TreeMap<>();
         for (AnalyseResult analyseResult : analyseResults) {
-            rankToGSSList.computeIfAbsent(analyseResult.getBlackRank(), (key) -> new ArrayList<>()).add(analyseResult.getBlackStrengthScore());
-            rankToGSSList.computeIfAbsent(analyseResult.getWhiteRank(), (key) -> new ArrayList<>()).add(analyseResult.getWhiteStrengthScore());
+            rankToGssList.computeIfAbsent(analyseResult.getBlackRank(), (key) -> new ArrayList<>()).add(analyseResult.getBlackStrengthScore());
+            rankToGssList.computeIfAbsent(analyseResult.getWhiteRank(), (key) -> new ArrayList<>()).add(analyseResult.getWhiteStrengthScore());
         }
-        rankToGSSList.entrySet().forEach(entry -> {
+        rankToGssList.entrySet().forEach(entry -> {
             rankToStatistic.put(entry.getKey(), entry.getValue().stream().collect(BigDecimalSummaryStatistics.statistics()));
         });
         DecimalFormat decimalFormat = new DecimalFormat("####0.00");
@@ -152,7 +155,6 @@ public class RunKataGo implements CommandLineRunner {
                             .stream().collect(Collectors.joining(","))
             );
         });
-//BigDecimal
     }
 
     private void analyseWithKataGo(String[] args) {
@@ -188,41 +190,42 @@ public class RunKataGo implements CommandLineRunner {
             ExecutorThreadFactory executorThreadFactory = new ExecutorThreadFactory(exceptionHandler);
             try {
                 Process kataGoProcess = kataGoFactory.createKataGoProcess();
-                ReadMetricExecutor readWinrateExecutor = new ReadMetricExecutor(kataGoProcess.getInputStream(), analyseProcessState, moveMetricExtractor, executorThreadFactory);
+                ReadMetricExecutor readWinrateExecutor = new ReadMetricExecutor(new BufferedReader(new InputStreamReader(kataGoProcess.getInputStream())), analyseProcessState, moveMetricExtractor, executorThreadFactory);
                 readWinrateExecutor.start();
-                CheckReadinessExecutor checkReadinessExecutor = new CheckReadinessExecutor(kataGoProcess.getErrorStream(), analyseProcessState, executorThreadFactory);
+                CheckReadinessExecutor checkReadinessExecutor = new CheckReadinessExecutor(new BufferedReader(new InputStreamReader(kataGoProcess.getErrorStream())), analyseProcessState, executorThreadFactory);
                 checkReadinessExecutor.start();
-                    RunMoveExecutor runMoveExecutor = new RunMoveExecutor(kataGoProcess.getOutputStream(), game, analyseProcessState, runTimeSec, moveMetricExtractor, executorThreadFactory, moveMetricsScoreCalculator);
-                    runMoveExecutor.start();
-                    while (!(analyseProcessState.isEnd || analyseProcessState.isErrorOccur)) {
-                        Thread.sleep(50);
-                    }
-                    if (analyseProcessState.isEnd) {
-                        AnalyseMetadata metadata = AnalyseMetadata.builder().runTimeSec(runTimeSec).sgfName(sgfName).sgf(game.getGeneratedSgf()).build();
-                        analyseInfoExporter.export(AnalyseInfo.builder().metadata(metadata).moveInfoList(analyseProcessState.moveInfoList).build());
-                        analyseResultExporter.export(AnalyseResult.builder().metadata(metadata)
-                                .moveMetricsList(analyseProcessState.moveMetricsList).build());
-                    }
-                    readWinrateExecutor.stop();
-                    checkReadinessExecutor.stop();
-                    runMoveExecutor.stop();
-                    kataGoProcess.destroy();
-                    log.debug("all metrics: {}", analyseProcessState.moveMetricsList);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
+                RunMoveExecutor runMoveExecutor = new RunMoveExecutor(new BufferedWriter(new OutputStreamWriter(kataGoProcess.getOutputStream())), game, analyseProcessState, runTimeSec, moveMetricExtractor, executorThreadFactory, moveMetricsScoreCalculator);
+                runMoveExecutor.start();
+                while (!(analyseProcessState.isEnd || analyseProcessState.isErrorOccur)) {
+                    Thread.sleep(50);
                 }
+                if (analyseProcessState.isEnd) {
+                    AnalyseMetadata metadata = AnalyseMetadata.builder().runTimeSec(runTimeSec).sgfName(sgfName).sgf(game.getGeneratedSgf()).build();
+                    analyseInfoExporter.export(AnalyseInfo.builder().metadata(metadata).moveInfoList(analyseProcessState.moveInfoList).build());
+                    analyseResultExporter.export(AnalyseResult.builder().metadata(metadata)
+                            .moveMetricsList(analyseProcessState.moveMetricsList)
+                            .gameScore(moveMetricsScoreCalculator.calculateGameScore(analyseProcessState.moveMetricsList)).build());
+                }
+                readWinrateExecutor.stop();
+                checkReadinessExecutor.stop();
+                runMoveExecutor.stop();
+                kataGoProcess.destroy();
+                log.debug("all metrics: {}", analyseProcessState.moveMetricsList);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
             }
         }
+    }
 
-        private Path getSgfPath(final String sgfName) {
-            return applicationConfig.getSgfFolderPath().resolve(sgfName + ".sgf");
-        }
+    private Path getSgfPath(final String sgfName) {
+        return applicationConfig.getSgfFolderPath().resolve(sgfName + ".sgf");
+    }
 
-        private Path getAnalyseInfoPath(String analyseInfoName) {
-            return applicationConfig.getAnalyseInfoFolderPath().resolve(analyseInfoName + ".json");
-        }
+    private Path getAnalyseInfoPath(String analyseInfoName) {
+        return applicationConfig.getAnalyseInfoFolderPath().resolve(analyseInfoName + ".json");
+    }
 
-        private List<Path> getAnalyseInfoPaths() {
+    private List<Path> getAnalyseInfoPaths() {
         try {
             return Files.list(applicationConfig.getAnalyseInfoFolderPath()).filter(p -> p.getFileName().toString().endsWith(".json")).toList();
         } catch (IOException e) {

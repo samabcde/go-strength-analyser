@@ -1,6 +1,7 @@
 package analyse.metric;
 
-import analyse.calculate.CalculateUtils;
+import analyse.calculate.GameScore;
+import analyse.calculate.MoveScore;
 import analyse.formula.Formula;
 import org.springframework.stereotype.Component;
 
@@ -14,10 +15,11 @@ public class MoveMetricsScoreCalculator {
         this.formula = formula;
     }
 
-    public MoveMetrics calculateScore(MoveMetrics moveMetrics) {
-        moveMetrics.setScoreLeadStrengthScore(formula.calculateMove(moveMetrics, MoveMetric::getRespectiveScoreLead));
-        moveMetrics.setWinrateStrengthScore(formula.calculateMove(moveMetrics, MoveMetric::getRespectiveWinrate));
-        moveMetrics.setStrengthScore(CalculateUtils.average(List.of(moveMetrics.getWinrateStrengthScore(), moveMetrics.getScoreLeadStrengthScore())));
-        return moveMetrics;
+    public MoveScore calculateMoveScore(MoveMetrics moveMetrics) {
+        return formula.calculateMove(moveMetrics);
+    }
+
+    public GameScore calculateGameScore(List<MoveMetrics> moveMetricsList) {
+        return formula.calculateGame(moveMetricsList);
     }
 }

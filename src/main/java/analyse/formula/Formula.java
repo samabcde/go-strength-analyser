@@ -1,16 +1,15 @@
 package analyse.formula;
 
-import analyse.metric.MoveMetric;
+import analyse.calculate.GameScore;
+import analyse.calculate.MoveScore;
 import analyse.metric.MoveMetrics;
 
-import java.math.BigDecimal;
 import java.util.List;
-import java.util.function.Function;
 
 public interface Formula {
     Version version();
 
-    BigDecimal calculateMove(MoveMetrics moveMetrics, Function<MoveMetric, BigDecimal> metricExtractor);
+    MoveScore calculateMove(MoveMetrics moveMetrics);
 
-    BigDecimal calculateGame(List<MoveMetrics> moveMetricsList);
+    GameScore calculateGame(List<MoveMetrics> moveMetricsList);
 }

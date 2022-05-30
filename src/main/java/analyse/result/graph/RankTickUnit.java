@@ -1,4 +1,4 @@
-package analyse.statistic;
+package analyse.result.graph;
 
 
 import analyse.sgf.Rank;

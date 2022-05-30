@@ -6,26 +6,23 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.concurrent.ThreadFactory;
 
 @Slf4j
 public class ReadMetricExecutor extends AbstractExecutor {
-    private final InputStream inputStream;
+    private final BufferedReader reader;
     private final MoveMetricExtractor moveMetricExtractor;
 
-    public ReadMetricExecutor(InputStream inputStream, AnalyseProcessState analyseProcessState, MoveMetricExtractor moveMetricExtractor, ThreadFactory threadFactory) {
+    public ReadMetricExecutor(BufferedReader reader, AnalyseProcessState analyseProcessState, MoveMetricExtractor moveMetricExtractor, ThreadFactory threadFactory) {
         super(analyseProcessState, threadFactory);
-        this.inputStream = inputStream;
+        this.reader = reader;
         this.moveMetricExtractor = moveMetricExtractor;
     }
 
     @Override
     protected Runnable task() {
         return () -> {
-            try (BufferedReader input = new BufferedReader(
-                    new InputStreamReader(inputStream))) {
+            try (BufferedReader input = reader) {
                 String line;
                 while ((line = input.readLine()) != null) {
                     log.debug(line);

@@ -1,4 +1,4 @@
-package analyse.statistic;
+package analyse.result.graph;
 
 import org.jfree.chart.axis.TickUnit;
 import org.jfree.chart.axis.TickUnitSource;

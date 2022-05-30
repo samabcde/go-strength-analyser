@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '2.6.5'
+    id 'org.springframework.boot' version '2.6.7'
 }
 configurations {
     all*.exclude group: 'org.apache.logging.log4j', module: 'log4j-slf4j-impl'
@@ -17,20 +17,36 @@ test {
     exclude("**/*IntegrationTest*")
 }
 
+tasks.register('unitTest', Test) {
+    useJUnitPlatform()
+    description = 'Runs Unit tests.'
+    group = 'verification'
+    exclude("**/*IntegrationTest*")
+}
+
+tasks.register('integrationTest', Test) {
+    useJUnitPlatform()
+    description = 'Runs Integration tests.'
+    group = 'verification'
+    include("**/*IntegrationTest*")
+}
+
 dependencies {
 
-    compileOnly 'org.projectlombok:lombok:1.18.22'
-    annotationProcessor 'org.projectlombok:lombok:1.18.22'
-    testCompileOnly 'org.projectlombok:lombok:1.18.22'
-    testAnnotationProcessor 'org.projectlombok:lombok:1.18.22'
-    testImplementation 'org.mockito:mockito-core:4.3.1'
+    compileOnly 'org.projectlombok:lombok:1.18.24'
+    annotationProcessor 'org.projectlombok:lombok:1.18.24'
+    testCompileOnly 'org.projectlombok:lombok:1.18.24'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.24'
+    testImplementation 'org.mockito:mockito-core:4.5.1'
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.8.2'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.2.2'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.3'
     implementation 'com.toomasr:sgf4j-parser:0.0.6'
-    implementation 'org.springframework.boot:spring-boot-starter:2.6.5'
-    implementation 'org.springframework.boot:spring-boot-starter-test:2.6.5'
-    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor:2.6.5'
+    implementation 'org.springframework.boot:spring-boot-starter:2.6.7'
+    implementation 'org.springframework.boot:spring-boot-starter-test:2.6.7'
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor:2.6.7'
+
+    implementation 'org.jfree:jfreechart:1.5.3'
 }

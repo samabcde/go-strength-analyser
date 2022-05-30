@@ -58,12 +58,21 @@ public enum Rank {
     _9P_,
     _NR_;
 
+    public int level() {
+        return ordinal();
+    }
+
     public String code() {
         return this.name().replaceAll("_", "");
     }
 
     public static Rank valueByCode(String code) {
         return Arrays.stream(values()).filter(r -> r.code().equalsIgnoreCase(code))
+                .findFirst().orElse(Rank._NR_);
+    }
+
+    public static Rank valueByLevel(int level) {
+        return Arrays.stream(values()).filter(r -> r.level() == level)
                 .findFirst().orElse(Rank._NR_);
     }
 }

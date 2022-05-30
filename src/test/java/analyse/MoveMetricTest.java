@@ -46,7 +46,7 @@ class MoveMetricTest {
     }
 
     @Nested
-    public class TestGetBlackScoreLead {
+    public class TestGetBlackMoveScoreLead {
 
         @BeforeEach
         public void setup() {

@@ -1,11 +1,10 @@
 package analyse.metric;
 
-import analyse.calculate.CalculateUtils;
+import analyse.calculate.MoveScore;
 import lombok.*;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
-import java.util.List;
 
 @ToString
 @Builder
@@ -20,14 +19,9 @@ public class MoveMetrics {
     @Getter
     private final Integer moveNo;
 
-    @Getter @Setter
-    private BigDecimal strengthScore;
-
-    @Getter @Setter
-    private BigDecimal winrateStrengthScore;
-
-    @Getter @Setter
-    private BigDecimal scoreLeadStrengthScore;
+    @Getter
+    @Setter
+    private MoveScore moveScore;
 
     public BigDecimal getBlackWinrate() {
         return this.candidate.getBlackWinrate();
@@ -43,6 +37,18 @@ public class MoveMetrics {
 
     public BigDecimal getRateChange() {
         return this.candidate.getRespectiveWinrate().subtract(this.ai.getRespectiveWinrate());
+    }
+
+    public BigDecimal getWinrateStrengthScore() {
+        return moveScore.winrateScore();
+    }
+
+    public BigDecimal getScoreLeadStrengthScore() {
+        return moveScore.scoreLeadScore();
+    }
+
+    public BigDecimal getStrengthScore() {
+        return moveScore.integrated();
     }
 
     public BigDecimal getWeightedWinrateStrengthScore() {

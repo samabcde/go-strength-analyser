@@ -6,30 +6,28 @@ import analyse.engine.RunKataGo;
 import analyse.info.MoveInfo;
 import analyse.metric.MoveMetric;
 import analyse.metric.MoveMetricExtractor;
-import analyse.metric.MoveMetricsScoreCalculator;
 import analyse.metric.MoveMetrics;
+import analyse.metric.MoveMetricsScoreCalculator;
 import analyse.sgf.SgfParser;
 import com.toomasr.sgf4j.parser.Game;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.util.List;
 import java.util.concurrent.ThreadFactory;
 
 @Slf4j
 public class RunMoveExecutor extends AbstractExecutor {
-    private final OutputStream outputStream;
+    private final BufferedWriter writer;
     private final MoveMetricExtractor moveMetricExtractor;
     private final MoveMetricsScoreCalculator moveMetricsScoreCalculator;
     private final Integer runTimeSec;
     private final Game game;
 
-    public RunMoveExecutor(OutputStream outputStream, Game game, AnalyseProcessState analyseProcessState, Integer runTimeSec, MoveMetricExtractor moveMetricExtractor, ThreadFactory threadFactory, MoveMetricsScoreCalculator moveMetricsScoreCalculator) {
+    public RunMoveExecutor(BufferedWriter writer, Game game, AnalyseProcessState analyseProcessState, Integer runTimeSec, MoveMetricExtractor moveMetricExtractor, ThreadFactory threadFactory, MoveMetricsScoreCalculator moveMetricsScoreCalculator) {
         super(analyseProcessState, threadFactory);
-        this.outputStream = outputStream;
+        this.writer = writer;
         this.game = game;
         this.runTimeSec = runTimeSec;
         this.moveMetricExtractor = moveMetricExtractor;
@@ -45,8 +43,7 @@ public class RunMoveExecutor extends AbstractExecutor {
             while (!analyseProcessState.isReady) {
                 sleep(50);
             }
-            try (BufferedWriter output = new BufferedWriter(
-                    new OutputStreamWriter(outputStream))) {
+            try (BufferedWriter output = writer) {
                 List<String> moveCommands = SgfParser.toMoveCommands(game);
                 output.newLine();
                 output.append("boardsize 19");
@@ -62,7 +59,9 @@ public class RunMoveExecutor extends AbstractExecutor {
                     MoveMetric ai = analyzeMove(output, moveCommand.split(" ")[0] + " " + aiMove, noOfMove, new AnalyseKey(AnalyseTarget.AI, moveNo, aiMove));
                     aiMove = candidate.getBestMove();
                     MoveMetric pass = analyzeMove(output, moveCommand.split(" ")[0] + " " + "pass", noOfMove, new AnalyseKey(AnalyseTarget.PASS, moveNo, "pass"));
-                    analyseProcessState.moveMetricsList.add(moveMetricsScoreCalculator.calculateScore(MoveMetrics.builder().moveNo(moveNo).ai(ai).candidate(candidate).pass(pass).build()));
+                    MoveMetrics moveMetrics = MoveMetrics.builder().moveNo(moveNo).ai(ai).candidate(candidate).pass(pass).build();
+                    moveMetrics.setMoveScore(moveMetricsScoreCalculator.calculateMoveScore(moveMetrics));
+                    analyseProcessState.moveMetricsList.add(moveMetrics);
                     output.append("play " + moveCommand);
                     output.newLine();
                     output.flush();

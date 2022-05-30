@@ -10,9 +10,9 @@ import java.util.concurrent.ThreadFactory;
 
 @Slf4j
 public class CheckReadinessExecutor extends AbstractExecutor {
-    private final InputStream inputStream;
+    private final BufferedReader inputStream;
 
-    public CheckReadinessExecutor(InputStream inputStream, AnalyseProcessState analyseProcessState, ThreadFactory threadFactory) {
+    public CheckReadinessExecutor(BufferedReader inputStream, AnalyseProcessState analyseProcessState, ThreadFactory threadFactory) {
         super(analyseProcessState, threadFactory);
         this.inputStream = inputStream;
     }
@@ -20,8 +20,7 @@ public class CheckReadinessExecutor extends AbstractExecutor {
     @Override
     protected Runnable task() {
         return () -> {
-            try (BufferedReader input = new BufferedReader(
-                    new InputStreamReader(inputStream))) {
+            try (BufferedReader input = inputStream) {
                 String line;
 
                 while ((line = input.readLine()) != null) {
@@ -35,6 +34,7 @@ public class CheckReadinessExecutor extends AbstractExecutor {
                 }
             } catch (IOException e) {
                 log.error("Read kata ready input error", e);
+                throw new RuntimeException(e);
             }
         };
     }

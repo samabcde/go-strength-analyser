@@ -8,7 +8,7 @@ import java.util.stream.Collector;
 
 public class BigDecimalSummaryStatistics implements Consumer<BigDecimal> {
 
-    public static Collector<BigDecimal, ?, BigDecimalSummaryStatistics> statistics() {
+    public static Collector<BigDecimal, BigDecimalSummaryStatistics, BigDecimalSummaryStatistics> statistics() {
         return Collector.of(BigDecimalSummaryStatistics::new,
                 BigDecimalSummaryStatistics::accept, BigDecimalSummaryStatistics::merge);
     }

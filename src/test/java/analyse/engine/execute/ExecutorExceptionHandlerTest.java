@@ -11,7 +11,8 @@ class ExecutorExceptionHandlerTest {
     private final Exception exception = mock(Exception.class);
 
     @Test
-    public void Given_When_Should() {
+    public void GivenExceptionHandler_WhenExceptionUncaught_ShouldFlagProcessStateErrorOccur() {
+        assertThat(analyseProcessState.isErrorOccur).isFalse();
         ExecutorExceptionHandler exceptionHandler = new ExecutorExceptionHandler(analyseProcessState);
         exceptionHandler.uncaughtException(thread, exception);
         assertThat(analyseProcessState.isErrorOccur).isTrue();
