@@ -90,3 +90,24 @@ Games and analyse info are coming from [go-strength-analyse-sgf](https://github.
 | 7D   | 8594.31  | 7730.12  | 9832.28  | 885.41  | 4     |
 | 9P   | 9102.16  | 8187.41  | 9757.60  | 403.39  | 19    |
 | NR   | 9578.71  | 9578.71  | 9578.71  | 0.00    | 1     |
+
+## Development
+
+### Prerequisite
+1. jdk 16 or higher
+2. [KataGo](https://github.com/lightvector/KataGo) is installed
+3. set properties in project folder `config/application-dev.properties`
+
+### Build
+In project folder  
+Run 
+```shell
+./gradlew build
+```
+
+### Analyse sgf
+In project folder
+Run 
+```shell
+./gradlew bootRun --args='kata_go -sgfName="{name of your sgf}" -runTimeSec={time you want to run} --spring.profiles.active=dev'
+```

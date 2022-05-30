@@ -3,31 +3,32 @@
     {
       "name": "path.sgfFolder",
       "type": "java.lang.String",
-      "description": "Description for path.sgfFolder."
+      "description": "folder to store sgf. e.g. 'file:///Users/you/.katago/sgf_out/'."
     },
     {
       "name": "path.kataGoPath",
       "type": "java.lang.String",
-      "description": "Description for path.kataGoPath."
+      "description": "path to the katago executable. e.g. 'file:///usr/local/bin/katago'."
     },
     {
       "name": "path.weightPath",
       "type": "java.lang.String",
-      "description": "Description for path.weightPath."
+      "description": "path to the katago weight file. e.g. 'file:///usr/local/Cellar/katago/1.11.0/share/katago/g170-b30c320x2-s4824661760-d1229536699.bin.gz'."
     },
     {
       "name": "path.configFilePath",
       "type": "java.lang.String",
-      "description": "Description for path.configFilePath."
+      "description": "path to the katago configuration file. e.g. 'file:///Users/you/.katago/gtp_custom.cfg'."
     },
     {
       "name": "path.outputFileFolder",
       "type": "java.lang.String",
-      "description": "Description for path.outputFileFolder."
+      "description": "folder for analyse result output. e.g. 'file:///Users/you/.katago/analyse_out/'."
     },
     {
       "name": "path.analyseInfoFolder",
       "type": "java.lang.String",
-      "description": "Description for path.analyseInfoFolder."
+      "description": "folder for analyse info output. e.g. 'file:///Users/sang/.katago/analyse_info/'."
     }
-  ] }
+  ]
+}
