@@ -37,8 +37,9 @@ where weight = best move score lead - worst move score lead
 game score = avg(game winrate score, game score lead score) * 10000
 
 ### Result
+Games and analyse info are coming from [go-strength-analyse-sgf](https://github.com/samabcde/go-strength-analyse-sgf)
 
-![img.png](formula/result/image/v1.png)
+![v1_result.png](formula/result/image/v1.png)
 
 | Rank | Avg      | Min      | Max      | Std     | Count |
 |------|----------|----------|----------|---------|-------|
