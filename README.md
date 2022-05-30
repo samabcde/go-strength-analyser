@@ -42,7 +42,8 @@ The final Go Strength Score($GSS$) is calculated by
 $$ GSS = avg(gameScore_{winrate}, gameScore_{scoreLead}) * 10000 $$
 
 ### Result
-Games and analyse info are coming from [go-strength-analyse-sgf](https://github.com/samabcde/go-strength-analyse-sgf)
+Games and analyse info are coming from [go-strength-analyse-sgf](https://github.com/samabcde/go-strength-analyse-sgf), the Rank(35K-7D) refer to [OGS rank](https://github.com/online-go/online-go.com/wiki/Getting-Started-%7C-Creating-and-Adjusting-Your-Account#your-rating),
+and 9P is for Profession 9 Dan players, NR is Not Ranked(AlphaGo Master).
 
 ![v1_result.png](formula/result/image/v1.png)
 
