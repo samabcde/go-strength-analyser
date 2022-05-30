@@ -5,7 +5,7 @@ plugins {
 configurations {
     all*.exclude group: 'org.apache.logging.log4j', module: 'log4j-slf4j-impl'
 }
-group 'org.example'
+group 'com.samabcde'
 version '1.0-SNAPSHOT'
 
 repositories {

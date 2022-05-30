@@ -36,3 +36,6 @@ gradletasknamecache
 
 # For development, and each user will have different value
 config/application-dev.properties
+
+# MacOS file
+*.DS_Store
