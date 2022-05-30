@@ -6,35 +6,40 @@ to [Elo Rating System](https://en.wikipedia.org/wiki/Elo_rating_system.)
 
 ## How
 
-Use AI(currently katago) to analyse the game, based on the metrics(winrate, scoreLead), we calculate the GSS(Go Strength
-Score)
+Use AI(currently katago) to analyse the game, based on the metrics(winrate, scoreLead), we calculate the Go Strength
+Score(GSS)
 by defined formula.
 
 ### Formula (V1)
 
-Basic idea is to measure where the move is located between best move and worst move on the board. So assume:
+Basic idea is to measure where the move is located between best move and worst move on the board. Assuming:
 
 - best move = best move from AI
 - worst move = pass
 
 ### Move Score
 
-A linear model will be adopted, if the move is best the score will be 1. If the move is worst, the score will be -1. If
+For a $metric$, we use values candidate move: $m_{candidate}$, ai move: $m_{ai}$ and pass move: $m_{pass}$.
+The formula of metric $score_m$ is:   
+$$ moveScore_m = {2metric_{candidate} - metric_{pass} - metric_{ai} \over metric_{ai} - metric_{pass}} $$
+
+Which is a linear model. i.e. If the move is best, the score will be 1. If the move is worst, the score will be -1. If
 the move is in middle of best and worst, the score will be 0.
 
-2 metrics is used to calculate the score _winrate_ and _scorelead_
+2 metrics are used to calculate the score _winrate_ and _scorelead_.
 So we have 2 scores for each move, winrate score and score lead score.
 
 ### Game Score
 
-Black player and White player will have their own Game Score, using the move score
+Black player and White player will have their own Game Score, using their move scores
 
-game winrate score = sum(winrate score * weight) / sum(weight)
-where weight = best move winrate - worst move winrate game score lead score = sum(score lead score * weight) / sum(
-weight)
-where weight = best move score lead - worst move score lead
+$$ gameScore_m = {\sum(moveScore_m * weight) / \sum(weight)}$$
 
-game score = avg(game winrate score, game score lead score) * 10000
+where $weight = metric_{ai} - metric_{pass}$
+
+The final Go Strength Score($GSS$) is calculated by
+
+$$ GSS = avg(gameScore_{winrate}, gameScore_{scoreLead}) * 10000 $$
 
 ### Result
 Games and analyse info are coming from [go-strength-analyse-sgf](https://github.com/samabcde/go-strength-analyse-sgf)
