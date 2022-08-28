@@ -28,10 +28,10 @@ public class ReadMetricExecutor extends AbstractExecutor {
                 while ((line = input.readLine()) != null) {
                     log.debug(line);
                     if (line.startsWith("info move")) {
-                        analyseProcessState.lastMoveInfo.set(new MoveInfo(analyseProcessState.currentAnalyseKey.get(), line));
+                        analyseProcessState.setLastMoveInfo(new MoveInfo(analyseProcessState.getCurrentAnalyseKey(), line));
                     }
                     if (line.equals("= 2")) {
-                        analyseProcessState.isCompleteAnalyze.set(true);
+                        analyseProcessState.completeAnalyze();
                         log.debug("end current move analyse");
                     }
                 }

@@ -19,11 +19,11 @@ class ReadMetricExecutorTest {
         Reader reader = new StringReader(info);
         AnalyseProcessState analyseProcessState = new AnalyseProcessState();
         ReadMetricExecutor readMetricExecutor = new ReadMetricExecutor(new BufferedReader(reader), analyseProcessState, new MoveMetricExtractor(), new ExecutorThreadFactory(new ExecutorExceptionHandler(analyseProcessState)));
-        analyseProcessState.currentAnalyseKey.set(analyseKey);
-        assertThat(analyseProcessState.lastMoveInfo.get()).isNull();
+        analyseProcessState.setCurrentAnalyseKey(analyseKey);
+        assertThat(analyseProcessState.getLastMoveInfo()).isNull();
         readMetricExecutor.start();
         readMetricExecutor.stop();
-        assertThat(analyseProcessState.lastMoveInfo.get()).isNotNull();
+        assertThat(analyseProcessState.getLastMoveInfo()).isNotNull();
     }
 
     @Test
@@ -32,9 +32,9 @@ class ReadMetricExecutorTest {
         Reader reader = new StringReader(versionInfo);
         AnalyseProcessState analyseProcessState = new AnalyseProcessState();
         ReadMetricExecutor readMetricExecutor = new ReadMetricExecutor(new BufferedReader(reader), analyseProcessState, new MoveMetricExtractor(), new ExecutorThreadFactory(new ExecutorExceptionHandler(analyseProcessState)));
-        assertThat(analyseProcessState.isCompleteAnalyze.get()).isFalse();
+        assertThat(analyseProcessState.isCompleteAnalyze()).isFalse();
         readMetricExecutor.start();
         readMetricExecutor.stop();
-        assertThat(analyseProcessState.isCompleteAnalyze.get()).isTrue();
+        assertThat(analyseProcessState.isCompleteAnalyze()).isTrue();
     }
 }

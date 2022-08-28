@@ -76,7 +76,7 @@ public class RunMoveExecutor extends AbstractExecutor {
     }
 
     private MoveMetric analyzeMove(BufferedWriter output, String moveCommand, int noOfMove, AnalyseKey analyseKey) throws IOException {
-        analyseProcessState.currentAnalyseKey.set(analyseKey);
+        analyseProcessState.setCurrentAnalyseKey(analyseKey);
         log.info("analyze " + analyseKey.analyseTarget() + " move " + analyseKey.moveNo() + " with " + analyseKey.move());
         int analyseTimeMs = RunKataGo.calculateAnalyseTimeMs(noOfMove, runTimeSec, analyseKey.moveNo());
 
@@ -92,9 +92,7 @@ public class RunMoveExecutor extends AbstractExecutor {
         output.newLine();
         output.flush();
         sleep(analyseTimeMs);
-        while (analyseProcessState.lastMoveInfo.get() == null) {
-            sleep(5);
-        }
+        analyseProcessState.waitUntilLastMoveInfoSet();
         output.append("protocol_version");
         output.newLine();
         output.flush();
@@ -103,12 +101,10 @@ public class RunMoveExecutor extends AbstractExecutor {
             output.newLine();
             output.flush();
         }
-        while (!analyseProcessState.isCompleteAnalyze.compareAndSet(true, false)) {
-            sleep(5);
-        }
-        MoveInfo moveInfo = analyseProcessState.lastMoveInfo.getAndSet(null);
-        if (!moveInfo.analyseKey().equals(analyseProcessState.currentAnalyseKey.get())) {
-            throw new IllegalStateException("result analyse key:" + moveInfo.analyseKey() + " current: " + analyseProcessState.currentAnalyseKey.get() + " not match");
+        analyseProcessState.waitUntilCompleteAnalyseThenReset();
+        MoveInfo moveInfo = analyseProcessState.getAndResetLastMoveInfo();
+        if (!moveInfo.analyseKey().equals(analyseProcessState.getCurrentAnalyseKey())) {
+            throw new IllegalStateException("result analyse key:" + moveInfo.analyseKey() + " current: " + analyseProcessState.getCurrentAnalyseKey() + " not match");
         }
         analyseProcessState.moveInfoList.add(moveInfo);
         return moveMetricExtractor.extractMoveMetric(moveInfo);
