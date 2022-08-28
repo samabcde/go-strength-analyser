@@ -24,6 +24,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 
@@ -48,7 +49,7 @@ class RunKataGoIntegrationTest {
         AnalyseInfoImporter analyseInfoImporter = new AnalyseInfoImporter();
         AnalyseResultExporter analyseResultExporter = new AnalyseResultExporter(applicationConfig);
         MoveMetricsScoreCalculator moveMetricsScoreCalculator = new MoveMetricsScoreCalculator(new FormulaV1());
-        KataGoFactory kataGoFactory = Mockito.spy(new KataGoFactory(applicationConfig));
+        KataGoFactory kataGoFactory = mock(KataGoFactory.class);
         when(kataGoFactory.createKataGoProcess()).thenReturn(fakeKataGo);
         runKataGo = new RunKataGo(applicationConfig, moveMetricExtractor, analyseInfoExporter, analyseInfoImporter, analyseResultExporter, kataGoFactory, moveMetricsScoreCalculator);
         executorService = Executors.newSingleThreadExecutor();
