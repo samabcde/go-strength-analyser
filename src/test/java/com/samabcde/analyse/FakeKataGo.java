@@ -28,9 +28,9 @@ public class FakeKataGo extends Process {
         }
     }
 
-    private static final AtomicBoolean shouldWriteMoveMetrics = new AtomicBoolean(false);
-    private static final AtomicBoolean shouldWriteProtocolVersion = new AtomicBoolean(false);
-    private static final AtomicBoolean exit = new AtomicBoolean(false);
+    private final AtomicBoolean shouldWriteMoveMetrics = new AtomicBoolean(false);
+    private final AtomicBoolean shouldWriteProtocolVersion = new AtomicBoolean(false);
+    private final AtomicBoolean exit = new AtomicBoolean(false);
 
     public void start() {
 

@@ -32,8 +32,8 @@ jobs:
       uses: gradle/gradle-build-action@v2
       with:
         arguments: build
-      continue-on-error: true
     - name: Upload build reports
+      if: always()
       uses: actions/upload-artifact@v3
       with:
         name: build-reports

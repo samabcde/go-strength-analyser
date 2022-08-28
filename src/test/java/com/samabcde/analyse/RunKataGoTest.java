@@ -21,6 +21,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.math.BigDecimal;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -51,6 +52,7 @@ class RunKataGoTest {
 
     @Mock
     KataGoFactory kataGoFactory;
+    ExecutorService executorService;
 
     @BeforeEach
     void setup() {
@@ -60,13 +62,15 @@ class RunKataGoTest {
         when(kataGoFactory.createKataGoProcess()).thenReturn(fakeKataGo);
         when(moveMetricsScoreCalculator.calculateMoveScore(any())).thenReturn(new MoveScore(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO));
         when(moveMetricsScoreCalculator.calculateGameScore(any())).thenReturn(new GameScore(BigDecimal.ZERO, BigDecimal.ZERO));
-        Executors.newSingleThreadExecutor().execute(() -> fakeKataGo.start());
+        executorService = Executors.newSingleThreadExecutor();
+        executorService.execute(() -> fakeKataGo.start());
         runKataGo = new RunKataGo(applicationConfig, moveMetricExtractor, analyseInfoExporter, analyseInfoImporter, analyseResultExporter, kataGoFactory, moveMetricsScoreCalculator);
     }
 
     @AfterEach
     void teardown() {
         fakeKataGo.destroy();
+        executorService.shutdownNow();
     }
 
     @Test
