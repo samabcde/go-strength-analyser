@@ -27,7 +27,7 @@ public class CheckReadinessExecutor extends AbstractExecutor {
                         log.info("E " + line);
                     }
                     if (line.startsWith("GTP ready, beginning main protocol loop")) {
-                        analyseProcessState.isReady = true;
+                        analyseProcessState.ready();
                     }
                 }
             } catch (IOException e) {

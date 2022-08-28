@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.concurrent.ThreadFactory;
 
 @Slf4j
@@ -36,6 +37,7 @@ public class ReadMetricExecutor extends AbstractExecutor {
                 }
             } catch (IOException e) {
                 log.error("Read kata ready input error", e);
+                throw new UncheckedIOException(e);
             }
         };
     }

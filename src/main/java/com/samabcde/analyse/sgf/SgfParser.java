@@ -35,9 +35,13 @@ public class SgfParser {
     public static Game parseGame(String sgfString) {
         return Sgf.createFromString(sgfString);
     }
+
     public static List<String> toMoveCommands(Game game) {
         List<String> moveCommands = new ArrayList<>();
         GameNode node = game.getFirstMove();
+        if (node == null) {
+            return moveCommands;
+        }
         do {
             if (!node.getProperties().containsKey("B") && !node.getProperties().containsKey("W")) {
                 continue;

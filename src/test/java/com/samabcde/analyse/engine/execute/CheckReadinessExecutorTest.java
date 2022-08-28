@@ -22,10 +22,10 @@ class CheckReadinessExecutorTest {
         CheckReadinessExecutor executor = new CheckReadinessExecutor(
                 new BufferedReader(reader), analyseProcessState, new ExecutorThreadFactory(new ExecutorExceptionHandler(analyseProcessState))
         );
-        assertFalse(analyseProcessState.isReady);
+        assertFalse(analyseProcessState.isReady());
         executor.start();
         executor.stop();
-        assertTrue(analyseProcessState.isReady);
+        assertTrue(analyseProcessState.isReady());
     }
 
     @Test
@@ -35,10 +35,10 @@ class CheckReadinessExecutorTest {
         CheckReadinessExecutor executor = new CheckReadinessExecutor(
                 new BufferedReader(reader), analyseProcessState, new ExecutorThreadFactory(new ExecutorExceptionHandler(analyseProcessState))
         );
-        assertFalse(analyseProcessState.isReady);
+        assertFalse(analyseProcessState.isReady());
         executor.start();
         executor.stop();
-        assertFalse(analyseProcessState.isReady);
+        assertFalse(analyseProcessState.isReady());
     }
 
 }

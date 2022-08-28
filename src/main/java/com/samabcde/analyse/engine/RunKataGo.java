@@ -33,6 +33,7 @@ import java.text.NumberFormat;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Component
 @Slf4j
@@ -69,7 +70,11 @@ public class RunKataGo implements CommandLineRunner {
         // BigDecimal part3MoveWeight = new BigDecimal("0.3");
         Integer part1MoveEnd = part1MoveWeight.multiply(new BigDecimal(noOfMove)).intValue();
         Integer part2MoveEnd = part1MoveWeight.add(part2MoveWeight).multiply(new BigDecimal(noOfMove)).intValue();
+
         Integer part1NoOfMove = part1MoveEnd;
+        if (part1NoOfMove == 0) {
+           return runTimeSec;
+        }
         Integer part2NoOfMove = part2MoveEnd - part1MoveEnd;
         Integer part3NoOfMove = noOfMove - part2MoveEnd;
         Integer part1RunTimePerMove = part1RunTime / part1NoOfMove;
@@ -105,7 +110,7 @@ public class RunKataGo implements CommandLineRunner {
         if (infoNameStr.isEmpty()) {
             infoPaths = getAnalyseInfoPaths();
         } else {
-            infoPaths = List.of(infoNameStr.split(",")).stream().map(infoName -> getAnalyseInfoPath(infoName)).toList();
+            infoPaths = Stream.of(infoNameStr.split(",")).map(this::getAnalyseInfoPath).toList();
         }
         List<AnalyseResult> analyseResults = new ArrayList<>();
         for (Path infoPath : infoPaths) {
@@ -137,23 +142,18 @@ public class RunKataGo implements CommandLineRunner {
             rankToGssList.computeIfAbsent(analyseResult.getBlackRank(), (key) -> new ArrayList<>()).add(analyseResult.getBlackStrengthScore());
             rankToGssList.computeIfAbsent(analyseResult.getWhiteRank(), (key) -> new ArrayList<>()).add(analyseResult.getWhiteStrengthScore());
         }
-        rankToGssList.entrySet().forEach(entry -> {
-            rankToStatistic.put(entry.getKey(), entry.getValue().stream().collect(BigDecimalSummaryStatistics.statistics()));
-        });
+        rankToGssList.forEach((key, value) -> rankToStatistic.put(key, value.stream().collect(BigDecimalSummaryStatistics.statistics())));
         DecimalFormat decimalFormat = new DecimalFormat("####0.00");
         NumberFormat countFormat = DecimalFormat.getIntegerInstance();
         System.out.println("Rank,Avg,Min,Max,Std,Count");
-        rankToStatistic.forEach((rank, statistic) -> {
-            System.out.println(
-                    List.of(rank.code(),
-                                    decimalFormat.format(statistic.getAverage()),
-                                    decimalFormat.format(statistic.getMin()),
-                                    decimalFormat.format(statistic.getMax()),
-                                    decimalFormat.format(statistic.getStandardDeviation()),
-                                    countFormat.format(statistic.getCount()))
-                            .stream().collect(Collectors.joining(","))
-            );
-        });
+        rankToStatistic.forEach((rank, statistic) -> System.out.println(
+                Stream.of(rank.code(),
+                        decimalFormat.format(statistic.getAverage()),
+                        decimalFormat.format(statistic.getMin()),
+                        decimalFormat.format(statistic.getMax()),
+                        decimalFormat.format(statistic.getStandardDeviation()),
+                        countFormat.format(statistic.getCount())).collect(Collectors.joining(","))
+        ));
     }
 
     private void analyseWithKataGo(String[] args) {
@@ -187,32 +187,26 @@ public class RunKataGo implements CommandLineRunner {
             AnalyseProcessState analyseProcessState = new AnalyseProcessState();
             ExecutorExceptionHandler exceptionHandler = new ExecutorExceptionHandler(analyseProcessState);
             ExecutorThreadFactory executorThreadFactory = new ExecutorThreadFactory(exceptionHandler);
-            try {
-                Process kataGoProcess = kataGoFactory.createKataGoProcess();
-                ReadMetricExecutor readWinrateExecutor = new ReadMetricExecutor(new BufferedReader(new InputStreamReader(kataGoProcess.getInputStream())), analyseProcessState, moveMetricExtractor, executorThreadFactory);
-                readWinrateExecutor.start();
-                CheckReadinessExecutor checkReadinessExecutor = new CheckReadinessExecutor(new BufferedReader(new InputStreamReader(kataGoProcess.getErrorStream())), analyseProcessState, executorThreadFactory);
-                checkReadinessExecutor.start();
-                RunMoveExecutor runMoveExecutor = new RunMoveExecutor(new BufferedWriter(new OutputStreamWriter(kataGoProcess.getOutputStream())), game, analyseProcessState, runTimeSec, moveMetricExtractor, executorThreadFactory, moveMetricsScoreCalculator);
-                runMoveExecutor.start();
-                while (!(analyseProcessState.isEnd || analyseProcessState.isErrorOccur)) {
-                    Thread.sleep(50);
-                }
-                if (analyseProcessState.isEnd) {
-                    AnalyseMetadata metadata = AnalyseMetadata.builder().runTimeSec(runTimeSec).sgfName(sgfName).sgf(game.getGeneratedSgf()).build();
-                    analyseInfoExporter.export(AnalyseInfo.builder().metadata(metadata).moveInfoList(analyseProcessState.moveInfoList).build());
-                    analyseResultExporter.export(AnalyseResult.builder().metadata(metadata)
-                            .moveMetricsList(analyseProcessState.moveMetricsList)
-                            .gameScore(moveMetricsScoreCalculator.calculateGameScore(analyseProcessState.moveMetricsList)).build());
-                }
-                readWinrateExecutor.stop();
-                checkReadinessExecutor.stop();
-                runMoveExecutor.stop();
-                kataGoProcess.destroy();
-                log.debug("all metrics: {}", analyseProcessState.moveMetricsList);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+            Process kataGoProcess = kataGoFactory.createKataGoProcess();
+            ReadMetricExecutor readWinrateExecutor = new ReadMetricExecutor(new BufferedReader(new InputStreamReader(kataGoProcess.getInputStream())), analyseProcessState, moveMetricExtractor, executorThreadFactory);
+            readWinrateExecutor.start();
+            CheckReadinessExecutor checkReadinessExecutor = new CheckReadinessExecutor(new BufferedReader(new InputStreamReader(kataGoProcess.getErrorStream())), analyseProcessState, executorThreadFactory);
+            checkReadinessExecutor.start();
+            RunMoveExecutor runMoveExecutor = new RunMoveExecutor(new BufferedWriter(new OutputStreamWriter(kataGoProcess.getOutputStream())), game, analyseProcessState, runTimeSec, moveMetricExtractor, executorThreadFactory, moveMetricsScoreCalculator);
+            runMoveExecutor.start();
+            analyseProcessState.waitUntilEndOrErrorOccur();
+            if (analyseProcessState.isEnd()) {
+                AnalyseMetadata metadata = AnalyseMetadata.builder().runTimeSec(runTimeSec).sgfName(sgfName).sgf(game.getGeneratedSgf()).build();
+                analyseInfoExporter.export(AnalyseInfo.builder().metadata(metadata).moveInfoList(analyseProcessState.moveInfoList).build());
+                analyseResultExporter.export(AnalyseResult.builder().metadata(metadata)
+                        .moveMetricsList(analyseProcessState.moveMetricsList)
+                        .gameScore(moveMetricsScoreCalculator.calculateGameScore(analyseProcessState.moveMetricsList)).build());
             }
+            readWinrateExecutor.stop();
+            checkReadinessExecutor.stop();
+            runMoveExecutor.stop();
+            kataGoProcess.destroy();
+            log.debug("all metrics: {}", analyseProcessState.moveMetricsList);
         }
     }
 

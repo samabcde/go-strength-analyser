@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.concurrent.ThreadFactory;
 
@@ -40,36 +41,36 @@ public class RunMoveExecutor extends AbstractExecutor {
             final String komi = game.getProperty("KM");
             final String rule = game.getProperty("RU");
             final Integer noOfMove = game.getNoMoves();
-            while (!analyseProcessState.isReady) {
-                sleep(50);
-            }
+            analyseProcessState.waitUntilReady();
             try (BufferedWriter output = writer) {
-                List<String> moveCommands = SgfParser.toMoveCommands(game);
                 output.newLine();
                 output.append("boardsize 19");
                 output.newLine();
                 output.append("komi " + komi);
                 output.newLine();
                 output.flush();
-                MoveMetric initial = analyzeMove(output, "", noOfMove, new AnalyseKey(AnalyseTarget.CANDIDATE, 0, ""));
-                String aiMove = initial.getBestMove();
-                for (int moveNo = 1; moveNo <= noOfMove; moveNo++) {
-                    String moveCommand = moveCommands.get(moveNo - 1);
-                    MoveMetric candidate = analyzeMove(output, moveCommand, noOfMove, new AnalyseKey(AnalyseTarget.CANDIDATE, moveNo, moveCommand.split(" ")[1]));
-                    MoveMetric ai = analyzeMove(output, moveCommand.split(" ")[0] + " " + aiMove, noOfMove, new AnalyseKey(AnalyseTarget.AI, moveNo, aiMove));
-                    aiMove = candidate.getBestMove();
-                    MoveMetric pass = analyzeMove(output, moveCommand.split(" ")[0] + " " + "pass", noOfMove, new AnalyseKey(AnalyseTarget.PASS, moveNo, "pass"));
-                    MoveMetrics moveMetrics = MoveMetrics.builder().moveNo(moveNo).ai(ai).candidate(candidate).pass(pass).build();
-                    moveMetrics.setMoveScore(moveMetricsScoreCalculator.calculateMoveScore(moveMetrics));
-                    analyseProcessState.moveMetricsList.add(moveMetrics);
-                    output.append("play " + moveCommand);
-                    output.newLine();
-                    output.flush();
+                if (noOfMove > 0) {
+                    List<String> moveCommands = SgfParser.toMoveCommands(game);
+                    MoveMetric initial = analyzeMove(output, "", noOfMove, new AnalyseKey(AnalyseTarget.CANDIDATE, 0, ""));
+                    String aiMove = initial.getBestMove();
+                    for (int moveNo = 1; moveNo <= noOfMove; moveNo++) {
+                        String moveCommand = moveCommands.get(moveNo - 1);
+                        MoveMetric candidate = analyzeMove(output, moveCommand, noOfMove, new AnalyseKey(AnalyseTarget.CANDIDATE, moveNo, moveCommand.split(" ")[1]));
+                        MoveMetric ai = analyzeMove(output, moveCommand.split(" ")[0] + " " + aiMove, noOfMove, new AnalyseKey(AnalyseTarget.AI, moveNo, aiMove));
+                        aiMove = candidate.getBestMove();
+                        MoveMetric pass = analyzeMove(output, moveCommand.split(" ")[0] + " " + "pass", noOfMove, new AnalyseKey(AnalyseTarget.PASS, moveNo, "pass"));
+                        MoveMetrics moveMetrics = MoveMetrics.builder().moveNo(moveNo).ai(ai).candidate(candidate).pass(pass).build();
+                        moveMetrics.setMoveScore(moveMetricsScoreCalculator.calculateMoveScore(moveMetrics));
+                        analyseProcessState.moveMetricsList.add(moveMetrics);
+                        output.append("play " + moveCommand);
+                        output.newLine();
+                        output.flush();
+                    }
                 }
-                output.append("quit");
-                analyseProcessState.isEnd = true;
+                output.append("quit").flush();
+                analyseProcessState.end();
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new UncheckedIOException(e);
             }
         };
     }

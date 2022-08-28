@@ -6,6 +6,7 @@ import org.springframework.core.io.Resource;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 
 @Configuration
@@ -46,7 +47,7 @@ public class ApplicationConfig {
         try {
             return kataGoPath.getFile().getAbsolutePath();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new UncheckedIOException(e);
         }
     }
 
@@ -54,7 +55,7 @@ public class ApplicationConfig {
         try {
             return sgfFolder.getFile().getAbsolutePath() + File.separator;
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new UncheckedIOException(e);
         }
     }
 
@@ -62,7 +63,7 @@ public class ApplicationConfig {
         try {
             return sgfFolder.getFile().toPath();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new UncheckedIOException(e);
         }
     }
 
@@ -70,7 +71,7 @@ public class ApplicationConfig {
         try {
             return weightPath.getFile().getAbsolutePath();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new UncheckedIOException(e);
         }
     }
 
@@ -78,7 +79,7 @@ public class ApplicationConfig {
         try {
             return configFilePath.getFile().getAbsolutePath();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new UncheckedIOException(e);
         }
     }
 
@@ -86,7 +87,7 @@ public class ApplicationConfig {
         try {
             return outputFileFolder.getFile().getAbsolutePath() + File.separator;
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new UncheckedIOException(e);
         }
     }
 
@@ -94,14 +95,14 @@ public class ApplicationConfig {
         try {
             return analyseInfoFolder.getFile().getAbsolutePath() + File.separator;
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new UncheckedIOException(e);
         }
     }
     public Path getAnalyseInfoFolderPath() {
         try {
             return analyseInfoFolder.getFile().toPath();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new UncheckedIOException(e);
         }
     }
 }

@@ -13,6 +13,6 @@ public class ExecutorExceptionHandler implements Thread.UncaughtExceptionHandler
     @Override
     public void uncaughtException(Thread t, Throwable e) {
         log.error(t.getName(), e);
-        analyseProcessState.isErrorOccur = true;
+        analyseProcessState.errorOccur();
     }
 }

@@ -24,7 +24,7 @@ public class FakeKataGo extends Process {
             err = new PipedInputStream(writeToErr);
             errWriter = new PrintWriter(new OutputStreamWriter(writeToErr));
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new UncheckedIOException(e);
         }
     }
 
@@ -64,7 +64,7 @@ public class FakeKataGo extends Process {
                         }
                     }
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    throw new UncheckedIOException(e);
                 }
             }
         });

@@ -14,9 +14,9 @@ class ExecutorExceptionHandlerTest {
 
     @Test
     public void GivenExceptionHandler_WhenExceptionUncaught_ShouldFlagProcessStateErrorOccur() {
-        assertThat(analyseProcessState.isErrorOccur).isFalse();
+        assertThat(analyseProcessState.isErrorOccur()).isFalse();
         ExecutorExceptionHandler exceptionHandler = new ExecutorExceptionHandler(analyseProcessState);
         exceptionHandler.uncaughtException(thread, exception);
-        assertThat(analyseProcessState.isErrorOccur).isTrue();
+        assertThat(analyseProcessState.isErrorOccur()).isTrue();
     }
 }
