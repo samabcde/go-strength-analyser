@@ -13,7 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class AnalyseInfoImporterTest {
-    private AnalyseInfoImporter analyseInfoImporter = new AnalyseInfoImporter();
+    private final AnalyseInfoImporter analyseInfoImporter = new AnalyseInfoImporter();
 
     @Test
     public void Given_infoJson_Should_importToAnalyseInfo() {

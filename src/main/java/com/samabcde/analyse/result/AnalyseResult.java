@@ -19,14 +19,17 @@ public class AnalyseResult {
     private final List<MoveMetrics> moveMetricsList;
 
     private final GameScore gameScore;
+
     @JsonIgnore
     public Rank getBlackRank() {
         return Rank.valueByCode(SgfParser.parseGame(metadata.getSgf()).getProperty("BR", "NR"));
     }
+
     @JsonIgnore
     public Rank getWhiteRank() {
         return Rank.valueByCode(SgfParser.parseGame(metadata.getSgf()).getProperty("WR", "NR"));
     }
+
     private AnalyseResult(AnalyseMetadata metadata, List<MoveMetrics> moveMetricsList, GameScore gameScore) {
         this.metadata = metadata;
         this.moveMetricsList = moveMetricsList;

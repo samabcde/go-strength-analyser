@@ -98,6 +98,7 @@ public class ApplicationConfig {
             throw new UncheckedIOException(e);
         }
     }
+
     public Path getAnalyseInfoFolderPath() {
         try {
             return analyseInfoFolder.getFile().toPath();

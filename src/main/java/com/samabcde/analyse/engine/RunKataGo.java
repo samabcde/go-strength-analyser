@@ -73,7 +73,7 @@ public class RunKataGo implements CommandLineRunner {
 
         Integer part1NoOfMove = part1MoveEnd;
         if (part1NoOfMove == 0) {
-           return runTimeSec;
+            return runTimeSec;
         }
         Integer part2NoOfMove = part2MoveEnd - part1MoveEnd;
         Integer part3NoOfMove = noOfMove - part2MoveEnd;

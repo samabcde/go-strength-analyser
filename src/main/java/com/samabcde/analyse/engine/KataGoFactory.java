@@ -4,6 +4,7 @@ import com.samabcde.analyse.core.ApplicationConfig;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 
 @Component
 public class KataGoFactory {
@@ -22,7 +23,7 @@ public class KataGoFactory {
         try {
             return processBuilder.start();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new UncheckedIOException(e);
         }
     }
 }

@@ -11,7 +11,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class SgfParser {
-    private static String sgf = "(;GM[1]FF[4]CA[UTF-8]AP[Sabaki:0.52.0]RU[japanese]KM[6.5]SZ[19]DT[2022-02-20];B[pd];W[dp];B[pq];W[dd];B[qk];W[gq];B[sa];W[gc];B[sb];W[dj];B[sc];W[jj];B[sd];W[kd];B[se];W[kp];B[sf];W[nc];B[sg];W[nq];B[sh];W[nj];B[si];W[ne];B[sj];W[ng];B[sk];W[nm];B[sl];W[no];B[sm];W[cp];B[sn];W[cd];B[so];W[ob];B[sp];W[or];B[sq];W[od];B[sr];W[op];B[ss];W[])";
+    private static final String sgf = "(;GM[1]FF[4]CA[UTF-8]AP[Sabaki:0.52.0]RU[japanese]KM[6.5]SZ[19]DT[2022-02-20];B[pd];W[dp];B[pq];W[dd];B[qk];W[gq];B[sa];W[gc];B[sb];W[dj];B[sc];W[jj];B[sd];W[kd];B[se];W[kp];B[sf];W[nc];B[sg];W[nq];B[sh];W[nj];B[si];W[ne];B[sj];W[ng];B[sk];W[nm];B[sl];W[no];B[sm];W[cp];B[sn];W[cd];B[so];W[ob];B[sp];W[or];B[sq];W[od];B[sr];W[op];B[ss];W[])";
 
     public static void main(String[] args) {
         int totalTimeMs = 0;

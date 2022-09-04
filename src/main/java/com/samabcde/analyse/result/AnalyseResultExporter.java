@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.UncheckedIOException;
 import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -86,7 +87,7 @@ public class AnalyseResultExporter {
             writer.flush();
             log.info("Exported to :{}", outputFilePath);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new UncheckedIOException(e);
         }
     }
 
@@ -97,7 +98,7 @@ public class AnalyseResultExporter {
         try (FileWriter fileWriter = new FileWriter(outputFilePath)) {
             objectMapper.writeValue(fileWriter, analyseResult);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new UncheckedIOException(e);
         }
     }
 

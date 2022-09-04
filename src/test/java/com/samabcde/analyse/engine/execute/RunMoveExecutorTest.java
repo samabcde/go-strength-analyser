@@ -15,11 +15,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RunMoveExecutorTest {
 
-    private static String emptySgf = """
+    private static final String emptySgf = """
             (;GM[1]FF[4]CA[UTF-8]AP[Sabaki:0.52.0]RU[japanese]KM[6.5]SZ[19]DT[2022-02-20];)
             """;
 
-    private static String oneMoveSgf = """
+    private static final String oneMoveSgf = """
             (;GM[1]FF[4]CA[UTF-8]AP[Sabaki:0.52.0]RU[japanese]KM[6.5]SZ[19]DT[2022-02-20];B[pd];)
             """;
 
