@@ -20,7 +20,8 @@ Basic idea is to measure where the move is located between best move and worst m
 ### Move Score
 
 For a $metric$, we use values candidate move: $metric_{candidate}$, ai move: $metric_{ai}$ and pass move: $metric_{pass}$.
-The formula of metric $score_m$ is:   
+The formula of metric $score_m$ is:  
+
 $$ moveScore_{metric} = {2metric_{candidate} - metric_{pass} - metric_{ai} \over metric_{ai} - metric_{pass}} $$
 
 Which is a linear model. i.e. If the move is best(ai), the score will be 1. If the move is worst(pass), the score will be -1. If
