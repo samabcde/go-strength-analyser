@@ -1,7 +1,9 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '2.7.3'
+    id 'org.springframework.boot' version '2.7.10'
 }
+apply plugin: 'io.spring.dependency-management'
+
 configurations {
     all*.exclude group: 'org.apache.logging.log4j', module: 'log4j-slf4j-impl'
 }
@@ -13,8 +15,8 @@ repositories {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_16
-    targetCompatibility = JavaVersion.VERSION_16
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
 
 test {
@@ -42,15 +44,16 @@ dependencies {
     testCompileOnly 'org.projectlombok:lombok:1.18.24'
     testAnnotationProcessor 'org.projectlombok:lombok:1.18.24'
     testImplementation 'org.mockito:mockito-core:4.7.0'
+    testImplementation 'org.mockito:mockito-junit-jupiter:4.7.0'
 
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.9.0'
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.0'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.0'
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.3'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.9.2'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.2'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.14.2'
     implementation 'com.toomasr:sgf4j-parser:0.0.6'
-    implementation 'org.springframework.boot:spring-boot-starter:2.7.3'
-    implementation 'org.springframework.boot:spring-boot-starter-test:2.7.3'
-    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor:2.7.3'
+    implementation 'org.springframework.boot:spring-boot-starter'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 
     implementation 'org.jfree:jfreechart:1.5.3'
 }
