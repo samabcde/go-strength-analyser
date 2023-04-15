@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '2.7.10'
+    id 'org.springframework.boot' version '3.0.5'
 }
 apply plugin: 'io.spring.dependency-management'
 
@@ -43,8 +43,8 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok:1.18.24'
     testCompileOnly 'org.projectlombok:lombok:1.18.24'
     testAnnotationProcessor 'org.projectlombok:lombok:1.18.24'
-    testImplementation 'org.mockito:mockito-core:4.7.0'
-    testImplementation 'org.mockito:mockito-junit-jupiter:4.7.0'
+    testImplementation 'org.mockito:mockito-core:5.3.0'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.3.0'
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.9.2'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.2'

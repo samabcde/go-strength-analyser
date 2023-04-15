@@ -14,7 +14,7 @@
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="false">
           <entry name="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.projectlombok/lombok/1.18.24/13a394eed5c4f9efb2a6d956e2086f1d81e857d9/lombok-1.18.24.jar" />
-          <entry name="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-configuration-processor/2.7.10/2efce9b613cf87d0b5669db136950be15f8da7b9/spring-boot-configuration-processor-2.7.10.jar" />
+          <entry name="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-configuration-processor/3.0.5/a042112791600faeb5c7d65d71277a9c9dd9996c/spring-boot-configuration-processor-3.0.5.jar" />
         </processorPath>
         <module name="go-strength-analyser.main" />
       </profile>
