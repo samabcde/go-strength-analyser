@@ -3,7 +3,12 @@ package com.samabcde.analyse.engine;
 import com.samabcde.analyse.core.AnalyseMetadata;
 import com.samabcde.analyse.core.AnalyseTarget;
 import com.samabcde.analyse.core.ApplicationConfig;
-import com.samabcde.analyse.engine.execute.*;
+import com.samabcde.analyse.engine.execute.AnalyseProcessState;
+import com.samabcde.analyse.engine.execute.CheckReadinessExecutor;
+import com.samabcde.analyse.engine.execute.ExecutorExceptionHandler;
+import com.samabcde.analyse.engine.execute.ExecutorThreadFactory;
+import com.samabcde.analyse.engine.execute.ReadMetricExecutor;
+import com.samabcde.analyse.engine.execute.RunMoveExecutor;
 import com.samabcde.analyse.info.AnalyseInfo;
 import com.samabcde.analyse.info.AnalyseInfoExporter;
 import com.samabcde.analyse.info.AnalyseInfoImporter;
@@ -23,14 +28,21 @@ import org.springframework.core.io.PathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.math.BigDecimal;
-import java.math.MathContext;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -55,38 +67,6 @@ public class RunKataGo implements CommandLineRunner {
         this.analyseResultExporter = analyseResultExporter;
         this.kataGoFactory = kataGoFactory;
         this.moveMetricsScoreCalculator = moveMetricScoreCalculator;
-    }
-
-    public static int calculateAnalyseTimeMs(Integer noOfMove, Integer runTimeSec, Integer moveNo) {
-        BigDecimal runTimeMs = new BigDecimal(runTimeSec * 1000).divide(BigDecimal.valueOf(3), MathContext.DECIMAL64);
-        BigDecimal part1TimeWeight = new BigDecimal("0.1");
-        BigDecimal part2TimeWeight = new BigDecimal("0.7");
-        BigDecimal part3TimeWeight = new BigDecimal("0.2");
-        Integer part1RunTime = runTimeMs.multiply(part1TimeWeight).intValue();
-        Integer part2RunTime = runTimeMs.multiply(part2TimeWeight).intValue();
-        Integer part3RunTime = runTimeMs.multiply(part3TimeWeight).intValue();
-        BigDecimal part1MoveWeight = new BigDecimal("0.1");
-        BigDecimal part2MoveWeight = new BigDecimal("0.6");
-        // BigDecimal part3MoveWeight = new BigDecimal("0.3");
-        Integer part1MoveEnd = part1MoveWeight.multiply(new BigDecimal(noOfMove)).intValue();
-        Integer part2MoveEnd = part1MoveWeight.add(part2MoveWeight).multiply(new BigDecimal(noOfMove)).intValue();
-
-        Integer part1NoOfMove = part1MoveEnd;
-        if (part1NoOfMove == 0) {
-            return runTimeSec;
-        }
-        Integer part2NoOfMove = part2MoveEnd - part1MoveEnd;
-        Integer part3NoOfMove = noOfMove - part2MoveEnd;
-        Integer part1RunTimePerMove = part1RunTime / part1NoOfMove;
-        Integer part2RunTimePerMove = part2RunTime / part2NoOfMove;
-        Integer part3RunTimePerMove = part3RunTime / part3NoOfMove;
-        if (moveNo < part1MoveEnd) {
-            return part1RunTimePerMove;
-        } else if (moveNo < part2MoveEnd) {
-            return part2RunTimePerMove;
-        } else {
-            return part3RunTimePerMove;
-        }
     }
 
     @Override

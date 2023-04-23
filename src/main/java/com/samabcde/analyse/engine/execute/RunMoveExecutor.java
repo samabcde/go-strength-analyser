@@ -2,7 +2,7 @@ package com.samabcde.analyse.engine.execute;
 
 import com.samabcde.analyse.core.AnalyseKey;
 import com.samabcde.analyse.core.AnalyseTarget;
-import com.samabcde.analyse.engine.RunKataGo;
+import com.samabcde.analyse.engine.AnalyseTimeCalculator;
 import com.samabcde.analyse.info.MoveInfo;
 import com.samabcde.analyse.metric.MoveMetric;
 import com.samabcde.analyse.metric.MoveMetricExtractor;
@@ -25,6 +25,7 @@ public class RunMoveExecutor extends AbstractExecutor {
     private final MoveMetricsScoreCalculator moveMetricsScoreCalculator;
     private final Integer runTimeSec;
     private final Game game;
+    private final AnalyseTimeCalculator calculator;
 
     public RunMoveExecutor(BufferedWriter writer, Game game, AnalyseProcessState analyseProcessState, Integer runTimeSec, MoveMetricExtractor moveMetricExtractor, ThreadFactory threadFactory, MoveMetricsScoreCalculator moveMetricsScoreCalculator) {
         super(analyseProcessState, threadFactory);
@@ -33,6 +34,7 @@ public class RunMoveExecutor extends AbstractExecutor {
         this.runTimeSec = runTimeSec;
         this.moveMetricExtractor = moveMetricExtractor;
         this.moveMetricsScoreCalculator = moveMetricsScoreCalculator;
+        this.calculator = new AnalyseTimeCalculator(game.getNoMoves(), runTimeSec);
     }
 
     @Override
@@ -78,7 +80,8 @@ public class RunMoveExecutor extends AbstractExecutor {
     private MoveMetric analyzeMove(BufferedWriter output, String moveCommand, int noOfMove, AnalyseKey analyseKey) throws IOException {
         analyseProcessState.setCurrentAnalyseKey(analyseKey);
         log.info("analyze " + analyseKey.analyseTarget() + " move " + analyseKey.moveNo() + " with " + analyseKey.move());
-        int analyseTimeMs = RunKataGo.calculateAnalyseTimeMs(noOfMove, runTimeSec, analyseKey.moveNo());
+//        int analyseTimeMs = RunKataGo.calculateAnalyseTimeMs(noOfMove, runTimeSec, analyseKey.moveNo());
+        int analyseTimeMs = calculator.getMoveAnalyseTimeMs(analyseKey.moveNo());
 
         if (!moveCommand.isEmpty()) {
             output.append("play " + moveCommand);
