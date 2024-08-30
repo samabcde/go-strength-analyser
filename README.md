@@ -96,7 +96,7 @@ and 9P is for Profession 9 Dan players, NR is Not Ranked(AlphaGo Master).
 ## Development
 
 ### Prerequisite
-1. jdk 17 or higher
+1. jdk 21 or higher
 2. [KataGo](https://github.com/lightvector/KataGo) is installed
 3. set properties in project folder `config/application-dev.properties`
 

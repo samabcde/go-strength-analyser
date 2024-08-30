@@ -11,8 +11,6 @@ public class ExecutorThreadFactory implements ThreadFactory {
 
     @Override
     public Thread newThread(Runnable r) {
-        final Thread thread = new Thread(r);
-        thread.setUncaughtExceptionHandler(exceptionHandler);
-        return thread;
+        return Thread.ofVirtual().uncaughtExceptionHandler(exceptionHandler).unstarted(r);
     }
 }
