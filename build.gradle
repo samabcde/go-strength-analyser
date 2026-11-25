@@ -52,7 +52,7 @@ dependencies {
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:6.0.3'
     implementation 'com.google.guava:guava:33.8.0-jre'
     implementation 'com.fasterxml.jackson.core:jackson-databind'
-    implementation 'com.toomasr:sgf4j-parser:0.0.6'
+    implementation 'com.toomasr:sgf4j-parser:0.0.7'
     implementation 'org.springframework.boot:spring-boot-starter'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
