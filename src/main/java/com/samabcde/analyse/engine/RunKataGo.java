@@ -24,7 +24,7 @@ import com.samabcde.analyse.statistic.BigDecimalSummaryStatistics;
 import com.toomasr.sgf4j.parser.Game;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.core.io.PathResource;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
@@ -94,7 +94,7 @@ public class RunKataGo implements CommandLineRunner {
         }
         List<AnalyseResult> analyseResults = new ArrayList<>();
         for (Path infoPath : infoPaths) {
-            Resource resource = new PathResource(infoPath);
+            Resource resource = new FileSystemResource(infoPath);
             AnalyseInfo analyseInfo = analyseInfoImporter.importInfo(resource);
             List<MoveMetric> moveMetricList = analyseInfo.getMoveInfoList().stream().map(moveMetricExtractor::extractMoveMetric).toList();
             Map<Integer, List<MoveMetric>> moveNumberToMoveMetricListMap = moveMetricList.stream().filter(moveMetric -> moveMetric.getMoveNo() > 0)
@@ -119,20 +119,20 @@ public class RunKataGo implements CommandLineRunner {
         Map<Rank, BigDecimalSummaryStatistics> rankToStatistic = new TreeMap<>();
         Map<Rank, List<BigDecimal>> rankToGssList = new TreeMap<>();
         for (AnalyseResult analyseResult : analyseResults) {
-            rankToGssList.computeIfAbsent(analyseResult.getBlackRank(), (key) -> new ArrayList<>()).add(analyseResult.getBlackStrengthScore());
-            rankToGssList.computeIfAbsent(analyseResult.getWhiteRank(), (key) -> new ArrayList<>()).add(analyseResult.getWhiteStrengthScore());
+            rankToGssList.computeIfAbsent(analyseResult.getBlackRank(), (_) -> new ArrayList<>()).add(analyseResult.getBlackStrengthScore());
+            rankToGssList.computeIfAbsent(analyseResult.getWhiteRank(), (_) -> new ArrayList<>()).add(analyseResult.getWhiteStrengthScore());
         }
         rankToGssList.forEach((key, value) -> rankToStatistic.put(key, value.stream().collect(BigDecimalSummaryStatistics.statistics())));
         DecimalFormat decimalFormat = new DecimalFormat("####0.00");
         NumberFormat countFormat = DecimalFormat.getIntegerInstance();
         System.out.println("Rank,Avg,Min,Max,Std,Count");
         rankToStatistic.forEach((rank, statistic) -> System.out.println(
-                Stream.of(rank.code(),
+                String.join(",", rank.code(),
                         decimalFormat.format(statistic.getAverage()),
                         decimalFormat.format(statistic.getMin()),
                         decimalFormat.format(statistic.getMax()),
                         decimalFormat.format(statistic.getStandardDeviation()),
-                        countFormat.format(statistic.getCount())).collect(Collectors.joining(","))
+                        countFormat.format(statistic.getCount()))
         ));
     }
 
@@ -154,7 +154,7 @@ public class RunKataGo implements CommandLineRunner {
         if (sgfNameStr.isEmpty()) {
             throw new IllegalArgumentException("No sgf name");
         }
-        final Integer runTimeSec = Integer.valueOf(runTimeSecStr);
+        final int runTimeSec = Integer.parseInt(runTimeSecStr);
         String[] sgfNames = sgfNameStr.split(",");
         for (String sgfName : sgfNames) {
             Game game = SgfParser.parseGame(getSgfPath(sgfName));

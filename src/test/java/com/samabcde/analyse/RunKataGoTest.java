@@ -18,6 +18,7 @@ import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.math.BigDecimal;
@@ -41,16 +42,16 @@ class RunKataGoTest {
 
     private FakeKataGo fakeKataGo;
 
-    @Mock
+    @MockitoBean
     AnalyseResultExporter analyseResultExporter;
 
-    @Mock
+    @MockitoBean
     MoveMetricsScoreCalculator moveMetricsScoreCalculator;
 
-    @Mock
+    @MockitoBean
     AnalyseInfoExporter analyseInfoExporter;
 
-    @Mock
+    @MockitoBean
     KataGoFactory kataGoFactory;
     ExecutorService executorService;
 
