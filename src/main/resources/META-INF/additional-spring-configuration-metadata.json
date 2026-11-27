@@ -29,6 +29,12 @@
       "name": "path.analyseInfoFolder",
       "type": "java.lang.String",
       "description": "folder for analyse info output. e.g. 'file:///Users/sang/.katago/analyse_info/'."
+    },
+    {
+      "name": "analysis.sgf.max-variations",
+      "type": "java.lang.Integer",
+      "defaultValue": 3,
+      "description": "maximum number of KataGo PV branches written per position (0-3)."
     }
   ]
 }

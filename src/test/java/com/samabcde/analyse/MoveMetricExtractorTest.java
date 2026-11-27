@@ -2,12 +2,15 @@ package com.samabcde.analyse;
 
 import com.samabcde.analyse.core.AnalyseKey;
 import com.samabcde.analyse.core.AnalyseTarget;
+import com.samabcde.analyse.engine.execute.AnalyseProcessState;
 import com.samabcde.analyse.info.MoveInfo;
 import com.samabcde.analyse.metric.MoveMetric;
 import com.samabcde.analyse.metric.MoveMetricExtractor;
+import com.samabcde.analyse.metric.MoveVariation;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -30,12 +33,16 @@ class MoveMetricExtractorTest {
         AnalyseKey analyseKey = new AnalyseKey(AnalyseTarget.CANDIDATE, 1, "A1");
         MoveInfo moveInfo = new MoveInfo(analyseKey, info);
         MoveMetric actual = moveMetricExtractor.extractMoveMetric(moveInfo);
-        MoveMetric expected = MoveMetric.builder()
-                .analyseKey(analyseKey)
-                .bestMove("L15")
-                .winrate(BigDecimal.valueOf(0.00955206))
-                .scoreLead(BigDecimal.valueOf(-28.424)).build();
-        assertEquals(expected, actual);
+        assertEquals(analyseKey, actual.getAnalyseKey());
+        assertEquals("L15", actual.getBestMove());
+        assertEquals(BigDecimal.valueOf(0.00955206), actual.getWinrate());
+        assertEquals(BigDecimal.valueOf(-28.424), actual.getScoreLead());
+        assertEquals(List.of(
+                new MoveVariation(0, List.of("L15", "E5", "M15", "C13", "C17", "C18", "D16")),
+                new MoveVariation(1, List.of("H2", "H8", "L15", "L10", "N12", "G9", "M15", "M10", "M11", "C13")),
+                new MoveVariation(2, List.of("G2", "H8", "L15", "G9", "M15", "L10", "M11", "M10", "N11", "N15"))
+        ), actual.getBestVariations().subList(0, 3));
+        assertEquals(9, actual.getBestVariations().size());
     }
 
     @Test
@@ -52,12 +59,10 @@ class MoveMetricExtractorTest {
         AnalyseKey analyseKey = new AnalyseKey(AnalyseTarget.CANDIDATE, 1, "A1");
         MoveInfo moveInfo = new MoveInfo(analyseKey, info);
         MoveMetric actual = moveMetricExtractor.extractMoveMetric(moveInfo);
-        MoveMetric expected = MoveMetric.builder()
-                .analyseKey(analyseKey)
-                .bestMove("pass")
-                .winrate(BigDecimal.valueOf(0.00955206))
-                .scoreLead(BigDecimal.valueOf(-28.424)).build();
-        assertEquals(expected, actual);
+        assertEquals("pass", actual.getBestMove());
+        assertEquals(BigDecimal.valueOf(0.00955206), actual.getWinrate());
+        assertEquals(BigDecimal.valueOf(-28.424), actual.getScoreLead());
+        assertEquals("L15", actual.getBestVariations().getFirst().firstMove());
     }
 
     @Test
@@ -65,5 +70,43 @@ class MoveMetricExtractorTest {
         String info = "random";
         MoveInfo moveInfo = new MoveInfo(new AnalyseKey(AnalyseTarget.CANDIDATE, 1, "A1"), info);
         assertThrows(IllegalArgumentException.class, () -> moveMetricExtractor.extractMoveMetric(moveInfo));
+    }
+
+    @Test
+    void Given_updatesAcrossLines_ShouldKeepLatestInfoPerVariationOrder() {
+        AnalyseKey analyseKey = new AnalyseKey(AnalyseTarget.CANDIDATE, 1, "A1");
+        AnalyseProcessState state = new AnalyseProcessState();
+        state.setLastMoveInfo(new MoveInfo(analyseKey, infoLine("L15", 0, "L15 E5", "0.4", "-2")));
+        state.setLastMoveInfo(new MoveInfo(analyseKey, infoLine("G4", 0, "G4 D16 Q4", "0.5", "-1")));
+        state.setLastMoveInfo(new MoveInfo(analyseKey, infoLine("H2", 1, "H2 H8", "0.3", "-3")));
+
+        MoveMetric actual = moveMetricExtractor.extractMoveMetric(state.getLastMoveInfo());
+
+        assertEquals("G4", actual.getBestMove());
+        assertEquals(2, actual.getBestVariations().size());
+        assertEquals(List.of("G4", "D16", "Q4"), actual.getBestVariations().getFirst().moves());
+        assertEquals("H2", actual.getBestVariations().get(1).firstMove());
+    }
+
+    @Test
+    void Given_kataGoSymmetryInfo_ShouldExtractVariation() {
+        String info = "info move Q4 visits 1 edgeVisits 1 utility 0.147465 winrate 0.572906 "
+                + "scoreMean 0.00713979 scoreStdev 14.2516 scoreLead 0.00713979 "
+                + "scoreSelfplay 0.44244 prior 0.178198 lcb -0.677094 utilityLcb -3.35253 "
+                + "weight 3.247 isSymmetryOf Q16 order 1 pv Q4 D16";
+        MoveInfo moveInfo = new MoveInfo(new AnalyseKey(AnalyseTarget.CANDIDATE, 1, "Q4"), info);
+
+        MoveMetric actual = moveMetricExtractor.extractMoveMetric(moveInfo);
+
+        assertEquals("Q4", actual.getBestMove());
+        assertEquals(new BigDecimal("0.572906"), actual.getWinrate());
+        assertEquals(new BigDecimal("0.00713979"), actual.getScoreLead());
+        assertEquals(List.of("Q4", "D16"), actual.getBestVariations().getFirst().moves());
+    }
+
+    private static String infoLine(String move, int order, String pv, String winrate, String scoreLead) {
+        return "info move " + move + " visits 100 edgeVisits 10 utility -1.0 winrate " + winrate
+                + " scoreMean " + scoreLead + " scoreStdev 1.0 scoreLead " + scoreLead
+                + " scoreSelfplay 0.0 prior 0.1 lcb -0.1 utilityLcb -1.1 weight 10 order " + order + " pv " + pv;
     }
 }

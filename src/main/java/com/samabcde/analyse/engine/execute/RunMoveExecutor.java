@@ -54,6 +54,7 @@ public class RunMoveExecutor extends AbstractExecutor {
                 if (noOfMove > 0) {
                     List<String> moveCommands = SgfParser.toMoveCommands(game);
                     MoveMetric initial = analyzeMove(output, "", noOfMove, new AnalyseKey(AnalyseTarget.CANDIDATE, 0, ""));
+                    analyseProcessState.rootMetric = initial;
                     String aiMove = initial.getBestMove();
                     for (int moveNo = 1; moveNo <= noOfMove; moveNo++) {
                         String moveCommand = moveCommands.get(moveNo - 1);
