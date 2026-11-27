@@ -1,9 +1,11 @@
 package com.samabcde.analyse.metric;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.samabcde.analyse.core.AnalyseKey;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @ToString
 @Builder
@@ -21,12 +23,17 @@ public class MoveMetric {
     private final BigDecimal scoreLead;
     @Getter
     private final String bestMove;
+    @Getter
+    @Builder.Default
+    @JsonIgnore
+    private final List<MoveVariation> bestVariations = List.of();
 
     public MoveMetric(AnalyseKey analyseKey, BigDecimal winrate, BigDecimal scoreLead) {
         this.analyseKey = analyseKey;
         this.winrate = winrate;
         this.scoreLead = scoreLead;
         this.bestMove = "";
+        this.bestVariations = List.of();
     }
 
     public int getMoveNo() {

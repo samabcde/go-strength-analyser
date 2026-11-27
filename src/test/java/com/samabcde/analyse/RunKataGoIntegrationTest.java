@@ -1,6 +1,7 @@
 package com.samabcde.analyse;
 
 import com.samabcde.analyse.core.ApplicationConfig;
+import com.samabcde.analyse.core.SgfAnalysisConfig;
 import com.samabcde.analyse.engine.KataGoFactory;
 import com.samabcde.analyse.engine.RunKataGo;
 import com.samabcde.analyse.formula.FormulaV1;
@@ -47,7 +48,7 @@ class RunKataGoIntegrationTest {
         MoveMetricExtractor moveMetricExtractor = new MoveMetricExtractor();
         AnalyseInfoExporter analyseInfoExporter = new AnalyseInfoExporter(applicationConfig);
         AnalyseInfoImporter analyseInfoImporter = new AnalyseInfoImporter();
-        AnalyseResultExporter analyseResultExporter = new AnalyseResultExporter(applicationConfig);
+        AnalyseResultExporter analyseResultExporter = new AnalyseResultExporter(applicationConfig, new SgfAnalysisConfig());
         MoveMetricsScoreCalculator moveMetricsScoreCalculator = new MoveMetricsScoreCalculator(new FormulaV1());
         KataGoFactory kataGoFactory = mock(KataGoFactory.class);
         when(kataGoFactory.createKataGoProcess()).thenReturn(fakeKataGo);

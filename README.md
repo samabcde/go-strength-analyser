@@ -111,3 +111,34 @@ In project folder, run
 ```shell
 ./gradlew bootRun --args='kata_go -sgfName="{name of your sgf}" -runTimeSec={time you want to run} --spring.profiles.active=dev'
 ```
+
+The analyzed SGF keeps the played game as its main line. Each played move has an `XGSA` property
+whose value is a versioned JSON object containing Black's win rate and score lead, the changes
+from the previous position from the mover's perspective, and whether the move follows KataGo's
+top variation. KataGo principal variations are written as complete SGF branches and tagged with
+their source move and rank. The existing `SBKV` property remains for compatibility.
+
+The main-line property uses this schema (win rates are fractions from 0 to 1; score leads are
+points; positive deltas favor the player who just moved):
+
+```json
+{
+  "schema": "go-strength-analyser",
+  "version": 1,
+  "kind": "metrics",
+  "moveNo": 1,
+  "mover": "B",
+  "winrateBlack": 0.5231,
+  "scoreLeadBlack": 2.4,
+  "deltaWinrateMover": 0.0231,
+  "deltaScoreLeadMover": 1.2,
+  "followsBest": true
+}
+```
+
+`followsBest` is `null` when the preceding-position analysis is unavailable. Each PV branch's
+first node has an `XGSA` JSON object with `kind: "bestVariation"`, the played move number, and
+its one-based rank. The branch itself contains the full PV as ordinary alternating SGF move nodes.
+
+Set `analysis.sgf.max-variations` in application properties to control the number of complete PV
+branches written per position; it defaults to `3` and accepts values from `0` to `3`.

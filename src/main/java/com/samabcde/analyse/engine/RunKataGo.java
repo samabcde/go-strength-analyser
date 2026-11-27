@@ -97,9 +97,14 @@ public class RunKataGo implements CommandLineRunner {
             Resource resource = new FileSystemResource(infoPath);
             AnalyseInfo analyseInfo = analyseInfoImporter.importInfo(resource);
             List<MoveMetric> moveMetricList = analyseInfo.getMoveInfoList().stream().map(moveMetricExtractor::extractMoveMetric).toList();
+            MoveMetric rootMetric = moveMetricList.stream()
+                    .filter(moveMetric -> moveMetric.getMoveNo() == 0 && moveMetric.getAnalyseKey().analyseTarget() == AnalyseTarget.CANDIDATE)
+                    .findFirst()
+                    .orElse(null);
             Map<Integer, List<MoveMetric>> moveNumberToMoveMetricListMap = moveMetricList.stream().filter(moveMetric -> moveMetric.getMoveNo() > 0)
                     .collect(Collectors.groupingBy(MoveMetric::getMoveNo));
             List<MoveMetrics> moveMetricsList = moveNumberToMoveMetricListMap.entrySet().stream()
+                    .sorted(Map.Entry.comparingByKey())
                     .map((entry) ->
                             {
                                 Map<AnalyseTarget, MoveMetric> analyseTargetToMoveMetricMap = entry.getValue().stream().collect(Collectors.toMap(moveMetric -> moveMetric.getAnalyseKey().analyseTarget(), Function.identity()));
@@ -112,7 +117,7 @@ public class RunKataGo implements CommandLineRunner {
                             }
                     ).toList();
             AnalyseResult analyseResult = AnalyseResult.builder().metadata(analyseInfo.getMetadata())
-                    .moveMetricsList(moveMetricsList).build();
+                    .moveMetricsList(moveMetricsList).rootMetric(rootMetric).build();
             analyseResultExporter.export(analyseResult);
             analyseResults.add(analyseResult);
         }
@@ -180,6 +185,7 @@ public class RunKataGo implements CommandLineRunner {
                 analyseInfoExporter.export(AnalyseInfo.builder().metadata(metadata).moveInfoList(analyseProcessState.moveInfoList).build());
                 analyseResultExporter.export(AnalyseResult.builder().metadata(metadata)
                         .moveMetricsList(analyseProcessState.moveMetricsList)
+                        .rootMetric(analyseProcessState.rootMetric)
                         .gameScore(moveMetricsScoreCalculator.calculateGameScore(analyseProcessState.moveMetricsList)).build());
             }
             readWinrateExecutor.stop();
